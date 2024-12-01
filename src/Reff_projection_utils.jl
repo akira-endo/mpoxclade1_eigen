@@ -1,19 +1,3 @@
-# ---
-# jupyter:
-#   jupytext:
-#     formats: jl:percent
-#     text_representation:
-#       extension: .jl
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.16.4
-#   kernelspec:
-#     display_name: Julia 1.8.3
-#     language: julia
-#     name: julia-1.8
-# ---
-
-# %%
 function create_susceptibility_by_year(year::Int, value1::Float64, value2::Float64, value3::Float64)
     # fixed the first four values
     base_susceptibility = [
@@ -39,7 +23,6 @@ function create_susceptibility_by_year(year::Int, value1::Float64, value2::Float
     return base_susceptibility
 end
 
-# %%
 function create_susceptibilities_for_years(years::Vector{Int}, value1::Float64, value2::Float64, value3::Float64)
     susceptibilities = Dict{Int, Vector}()
     for year in years

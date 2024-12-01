@@ -7,19 +7,17 @@
 #       extension: .jl
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.16.4
+#       jupytext_version: 1.16.1
 #   kernelspec:
-#     display_name: Julia 1.8.3
+#     display_name: Julia 1.9.3
 #     language: julia
-#     name: julia-1.8
+#     name: julia-1.9
 # ---
 
 using Pkg
 Pkg.activate("../")
 
-# +
-#Pkg.instantiate()
-# -
+Pkg.instantiate()
 
 # load functions
 include("../src/eigen.jl");
@@ -41,14 +39,6 @@ zmb2015_24_fit = endemic2015_24_fit.zmb_fit
 drc2015_24_fit = endemic2015_24_fit.drc_fit;
 # -
 
-keys(zmb2015_24_fit)
-
-dominanteigval(zmb2015_24_fit.all[2]) # [2] is ContactMatrix for 2024 data 
-
-zmb2015_24_fit.all[2].susceptibility
-
-zmb2015_24_fit.all[2].parameters
-
 # add new parameters for the group just under partially vaccinated
 for cm_vec in zmb2015_24_fit
     for cm in cm_vec
@@ -56,18 +46,6 @@ for cm_vec in zmb2015_24_fit
         cm.susceptibility[1][end-2]=cm.parameters[:s_postvax]
     end
 end 
-
-zmb2015_24_fit.all[2].parameters
-
-zmb2015_24_fit.all[2].susceptibility
-
-zmb2015_24_fit.all[2].parameters[:s_postvax].=1
-
-zmb2015_24_fit.all[2].susceptibility
-
-zmb2015_24_fit.all[2].parameters
-
-zmb2015_24_fit.all[2].susceptibility[1]
 
 # ### DRC
 

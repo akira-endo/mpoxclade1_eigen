@@ -1,24 +1,6 @@
-# -*- coding: utf-8 -*-
-# ---
-# jupyter:
-#   jupytext:
-#     formats: jl:percent
-#     text_representation:
-#       extension: .jl
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.16.4
-#   kernelspec:
-#     display_name: Julia 1.8.3
-#     language: julia
-#     name: julia-1.8
-# ---
-
-# %%
 sorted_keys = sort(collect(keys(all_susceptibilities)), by = x -> x[1], rev = true)
 years = [2010, 2015, 2020, 2024, 2030] 
 
-# %%
 # all contact
 first_key = sorted_keys[1]
 susceptibilities = all_susceptibilities[first_key] 
