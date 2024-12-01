@@ -61,4 +61,4 @@ df <- mapply(Simulation_fn, seq(0,100*1500,100))
 result_df <- df %>% t() %>% as.data.frame()
 colnames(result_df) <- c("SAR","Infections","Reff_1")
 
-write.csv(result_df, "outputs/outbreakpotential_msm/SAR_m_Reff_4w10d.csv")
+write.csv(result_df, "data/intermediate/SAR_m_Reff_4w10d.csv")

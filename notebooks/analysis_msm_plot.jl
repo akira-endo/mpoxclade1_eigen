@@ -32,7 +32,7 @@ gr(fontfamily="Helvetica", foreground_color_legend=nothing, background_color_leg
 # %%
 using CSV, DataFrames
 # Load the data
-merged_data = CSV.read("../outputs/outbreakpotential_msm/merged_data.csv", DataFrame) #|> first
+merged_data = CSV.read("../data/intermediate/merged_data.csv", DataFrame) #|> first
 
 # %%
 using Plots

@@ -69,7 +69,7 @@ final_exposure <- function(sar_ratio){
 df_final <- mapply(final_exposure, c(1e-5, seq(0.05,10,0.05)))
 result_df_final <- cbind(c(1e-5, seq(0.05,10,0.05))*0.1,df_final) %>% as.data.frame()
 colnames(result_df_final) <- c("SAR","case")
-write.csv(result_df_final, "outputs/outbreakpotential_msm/SAR_m_final10.csv")
+write.csv(result_df_final, "data/intermediate/SAR_m_final10.csv")
 
 
 # %%
@@ -97,7 +97,7 @@ final_exposure <- function(sar_ratio){
 df_final <- mapply(final_exposure, c(1e-5, seq(0.05,10,0.05)))
 result_df_final <- cbind(c(1e-5, seq(0.05,10,0.05))*0.1,df_final) %>% as.data.frame()
 colnames(result_df_final) <- c("SAR","case")
-write.csv(result_df_final, "outputs/outbreakpotential_msm/SAR_m_final7.csv")
+write.csv(result_df_final, "data/intermediate/SAR_m_final7.csv")
 
 # %%
 ### function of recursive final size equation
@@ -124,12 +124,12 @@ final_exposure <- function(sar_ratio){
 df_final <- mapply(final_exposure, c(1e-5, seq(0.05,10,0.05)))
 result_df_final <- cbind(c(1e-5, seq(0.05,10,0.05))*0.1,df_final) %>% as.data.frame()
 colnames(result_df_final) <- c("SAR","case")
-write.csv(result_df_final, "outputs/outbreakpotential_msm/SAR_m_final14.csv")
+write.csv(result_df_final, "data/intermediate/SAR_m_final14.csv")
 
 # %%
-result_df_final <- read.csv("outputs/outbreakpotential_msm/SAR_m_final10.csv")
-result_df_final7 <- read.csv("outputs/outbreakpotential_msm/SAR_m_final7.csv")
-result_df_final14 <- read.csv("outputs/outbreakpotential_msm/SAR_m_final14.csv")
+result_df_final <- read.csv("data/intermediate/SAR_m_final10.csv")
+result_df_final7 <- read.csv("data/intermediate/SAR_m_final7.csv")
+result_df_final14 <- read.csv("data/intermediate/SAR_m_final14.csv")
 result_df_final$R0_10 <- sar_m_reff[1,4] * result_df_final$SAR * 10
 result_df_final7$R0_7 <-  sar_m_reff7[1,4] * result_df_final7$SAR * 10
 result_df_final14$R0_14 <- sar_m_reff14[1,4] * result_df_final14$SAR * 10
@@ -140,12 +140,12 @@ library(scales)
 
 # %%
 # read datasets
-sar_m_reff <- read.csv("outputs/outbreakpotential_msm/SAR_m_Reff_4w10d.csv")
-sar_m_final <- read.csv("outputs/outbreakpotential_msm/SAR_m_final10.csv")
-sar_m_reff7 <- read.csv("outputs/outbreakpotential_msm/SAR_m_Reff_4w7d.csv")
-sar_m_final7 <- read.csv("outputs/outbreakpotential_msm/SAR_m_final7.csv")
-sar_m_reff14 <- read.csv("outputs/outbreakpotential_msm/SAR_m_Reff_4w14d.csv")
-sar_m_final14 <- read.csv("outputs/outbreakpotential_msm/SAR_m_final14.csv")
+sar_m_reff <- read.csv("data/intermediate/SAR_m_Reff_4w10d.csv")
+sar_m_final <- read.csv("data/intermediate/SAR_m_final10.csv")
+sar_m_reff7 <- read.csv("data/intermediate/SAR_m_Reff_4w7d.csv")
+sar_m_final7 <- read.csv("data/intermediate/SAR_m_final7.csv")
+sar_m_reff14 <- read.csv("data/intermediate/SAR_m_Reff_4w14d.csv")
+sar_m_final14 <- read.csv("data/intermediate/SAR_m_final14.csv")
 
 sar_m_final$case <- as.numeric(sar_m_final$case)
 sar_m_final$SAR <- as.numeric(sar_m_final$SAR)
@@ -190,7 +190,7 @@ merged_data <- merged_data %>%
          case_10 = case_10, closest_SAR_10 = closest_SAR_10)
 
 # %%
-merged_data <- read.csv("outputs/outbreakpotential_msm/merged_data.csv")
+merged_data <- read.csv("data/intermediate/merged_data.csv")
 merged_data$clade1_cR0_7 <- sar_m_reff7[1,4] * merged_data$closest_SAR_7 * 10
 merged_data$clade1_cR0_10 <- sar_m_reff[1,4] * merged_data$closest_SAR_10 * 10
 merged_data$clade1_cR0_14 <- sar_m_reff14[1,4] * merged_data$closest_SAR_14 * 10
@@ -200,4 +200,4 @@ merged_data$clade2_R0_14 <- sar_m_reff14[1,4] * merged_data$SAR * 10
 head(merged_data)
 
 # %%
-write.csv(merged_data,"outputs/outbreakpotential_msm/merged_data.csv")
+write.csv(merged_data,"data/intermediate/merged_data.csv")
