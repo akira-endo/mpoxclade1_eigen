@@ -1,8 +1,8 @@
 version: "3"
 services:
   lab:
-    image: jupyter_clade1mpox:v02 
-    container_name: clade1mpox_container 
+    image: jupyter_clade1mpox:v03 
+    container_name: clade1mpox_dev_container 
     build:
         context: .
         dockerfile: ./.devcontainer/Dockerfile

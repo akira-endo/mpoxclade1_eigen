@@ -43,25 +43,15 @@ RUN printf ' { \
 
 # [Optional] If your Project.toml rarely change, uncomment this section to add them to the image.
 
-# Julia packages
-COPY Project.toml .
-COPY Manifest.toml .
-RUN sudo julia -e 'using Pkg; Pkg.activate("."); Pkg.instantiate();Pkg.precompile()' \
-   && rm -rf Project.toml \
-   && rm -rf Manifest.toml
 
 # R packages
 RUN conda install -c conda-forge r-remotes=2.5.0
-
 RUN R -e 'library(remotes); remotes::install_version("socialmixr", version = "0.3.2",repos = "https://cloud.r-project.org/"); remotes::install_version("hhh4contacts", version="0.13.3", repos= "https://cloud.r-project.org/")'
 
-# [Optional] If your pip requirements rarely change, uncomment this section to add them to the image.
-# COPY requirements.txt /tmp/pip-tmp/
-# RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt \
-#    && rm -rf /tmp/pip-tmp
+# Fix the issue of old libstdc++
+RUN rm -rf /opt/julia-1.9.3/lib/julia/libstdc++.so.6
+RUN ln -s /opt/conda/lib/libstdc++.so.6 /opt/julia-1.9.3/lib/julia/libstdc++.so.6
 
-# [Optional] Uncomment this section to install additional OS packages.
-# RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-#     && apt-get -y install --no-install-recommends <your-package-list-here>
+
 
 USER jovyan
