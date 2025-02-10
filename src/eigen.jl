@@ -10,6 +10,7 @@ using JSON3
 using Optim
 using FiniteDiff
 using Printf
+using Turing
 
 @rimport socialmixr as smr
 @rimport base as r
@@ -188,6 +189,7 @@ struct NLL
     cm::ContactMatrix
     mutateparameters::Vector{Scalar}
     modifier! ::Function
+    penalty::Float64
 end
 
 struct NLLs{P<:Pyramid,C<:ContactMatrix}
@@ -195,25 +197,26 @@ struct NLLs{P<:Pyramid,C<:ContactMatrix}
     cm::Vector{C}
     mutateparameters::Vector{Scalar}
     modifier! ::Function
+    penalty::Float64
     sync::Vector{Symbol}
 end
 
 function (nll::NLL)(x)
         for (parameter, el) in zip(nll.mutateparameters,x) parameter.=el end
         nll.cm.parameters[:s_partvax] .= (1+nll.cm.parameters[:s_vax][])/2 # effectiveness among partvax to be half s_vax
-        modifier_ll = nll.modifier!(nll.p, nll.cm)
+        modifier_ll = nll.modifier!(nll.p, nll.cm) * nll.penalty
         -likelihood(nll.p,nll.cm)-modifier_ll
 end
 function (nlls::NLLs)(x)
         for (parameter, el) in zip(nlls.mutateparameters,x) parameter.=el end
         first(nlls.cm).parameters[:s_partvax] .= (1+first(nlls.cm).parameters[:s_vax][])/2 # effectiveness among partvax to be half s_vax
-        modifier_ll = mean(nlls.modifier!.(nlls.p, nlls.cm))
+        modifier_ll = mean(nlls.modifier!.(nlls.p, nlls.cm)) * nlls.penalty
         if !(isempty(nlls.sync)) for i in 1:length(nlls.cm)-1 overwriteparameters!(nlls.cm[i+1], nlls.cm[i],nlls.sync) end end # assume cm is in growing order in terms of # parameters
         -sum(likelihood.(nlls.p,nlls.cm))-modifier_ll
 end
 
 function optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMatrix; sync=false,modifier!::Function = (x...)->0.) # sync is only placeholder in this method
-    nll=NLL(p,cm,mutateparameters,modifier!)
+    nll=NLL(p,cm,mutateparameters,modifier!, 10000.)
     @time opt = optimize(nll, zeros(length(mutateparameters)).+1e-6,fill(500.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()),Optim.Options(g_tol=1e-5, x_tol=1e-6))
     hess = FiniteDiff.finite_difference_hessian(nll,opt.minimizer)
     nll(opt.minimizer)
@@ -221,18 +224,31 @@ function optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMatr
 end
 
 function optimise!(mutateparameters::Vector{Scalar}, p::AbstractArray{<:Pyramid}, cm::AbstractArray{<:ContactMatrix}; sync = Symbol[], modifier!::Function = (x...)->0.)
-    nlls=NLLs(p,cm,mutateparameters,modifier!,sync)
+    nlls=NLLs(p,cm,mutateparameters,modifier!,10000.,sync)
     @time opt = optimize(nlls, zeros(length(mutateparameters)).+1e-6,fill(100.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()), Optim.Options(g_tol=1e-5, x_tol=1e-6, time_limit=1800.))
     hess = FiniteDiff.finite_difference_hessian(nlls,opt.minimizer)
     nlls(opt.minimizer)#for (parameter, el) in zip(mutateparameters,opt.minimizer) parameter.=el end
     (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess,result=opt)
 end
 
+## optimise! using MCMC
+function b_optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMatrix; sync=false,modifier!::Function = (x...)->0.) # sync is only placeholder in this method
+    nll=NLL(p,cm,mutateparameters,modifier!,10000.)
+    @model function poistrick(x=0., nll_input = nll, len = length(mutateparameters))
+        for i in 1:len par[i] ~ Uniform(0,100) end
+        x~Poisson(-nll_input(par))
+    end
+    chain = sample(poistrick(), PG(10),1000)
+    hess = FiniteDiff.finite_difference_hessian(nll,opt.minimizer)
+    nll(opt.minimizer)
+    (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess ,result=opt)
+end
 
-function estimateparameters!(cms, p::Union{Pyramid,AbstractArray{<:Pyramid}}, parameters;sync=false,modifier!::Function = (x...)->0.)
+
+function estimateparameters!(cms, p::Union{Pyramid,AbstractArray{<:Pyramid}}, parameters;sync=false,modifier!::Function = (x...)->0., bayesian=false)
     [begin
         firstel = typeof(cmt) <: ContactMatrix ? cmt : first(cmt) # if cmt is an array of ContactMatrix take the first
-    opt = optimise!(parms, p, cmt,sync=sync,modifier! = modifier!)
+    opt = !bayesian ? optimise!(parms, p, cmt,sync=sync,modifier! = modifier!) : b_optimise!(parms, p, cmt,sync=sync,modifier! = modifier!)
     firstel.misc[:opt] = opt
         end for (cmt, parms) in zip(cms, parameters)]
 end

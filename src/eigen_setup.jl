@@ -65,12 +65,22 @@ function propmix!(p::Pyramid,cm::ContactMatrix, bcond = [0.1,0.01])
     
     ind = split.(string.(addmatkeys),Ref("_addmat")).|> (Base.BroadcastFunction(Base.Fix1(parse,Int)))
     paramat = [cm.parameters[Symbol(r,"_addmat",c)] for r in first.(ind)|>unique|>sort, c in last.(ind)|>unique|>sort].|>getindex # row-wise arrangement
+    
+    #modifier_ll=sum(log.(abs.(paramat.-1)))/10000 # prior adjustment
+    
     paramat .= (1 .-paramat).^2 ./2#exp.(.-paramat)/2#(1 .-paramat).^2/5 # transform for stable search within (0, 0.2)
     paqa=[zeros(cm.ageinterval|>size) for x in 1:2]
     paqa_substitute=paramat|>eachrow|>collect
     for i in 1:2 paqa[i][last.(ind)|>unique|>sort].=paqa_substitute[i] end
     na=convert(Vector{Float64},cm.misc[:pop])./2
     sum_napaqa=sum.(broadcast.(*, Ref(na), paqa))
+
+    modifier_ll = -sum(((log.(sum_napaqa./[sum(na[4:7]),1]).-log.(bcond))./log.(bcond)).^2) # penalty term to ensure boundary condition
+
+    # Rescale to ensure high risk pop size is as specified
+    paqa.*=[sum(na[4:7]),1].*bcond./sum_napaqa 
+    sum_napaqa.=sum.(broadcast.(*, Ref(na), paqa))
+    
     vw=[cm.parameters[:addmat_v][],cm.parameters[:addmat_w][]] #v/w: #partners of women / men
     v0=vw[1]/((sqrt(12^2+22^2)/(17.61+5.51))^2+1)
     w0 = v0*(sum_napaqa[2]/sum_napaqa[1])
@@ -81,7 +91,7 @@ function propmix!(p::Pyramid,cm::ContactMatrix, bcond = [0.1,0.01])
         fill(zero(s_cmt[1]),1,4)]
     cm.addmat=addmat|>transpose
     
-    -sum(((log.(sum_napaqa./[sum(na[4:7]),1]).-log.(bcond))./log.(bcond)).^2)*10000 # modifier_ll to output
+    modifier_ll #-sum(((log.(sum_napaqa./[sum(na[4:7]),1]).-log.(bcond))./log.(bcond)).^2)*10000 # modifier_ll to output
 end
 
 drc2015 = parameterise(drc2015_original, immunity2015)
