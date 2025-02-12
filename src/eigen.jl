@@ -11,6 +11,10 @@ using Optim
 using FiniteDiff
 using Printf
 using Turing
+using AdvancedHMC
+using Random
+using LogDensityProblemsAD
+using FiniteDifferences
 
 @rimport socialmixr as smr
 @rimport base as r
@@ -233,15 +237,34 @@ end
 
 ## optimise! using MCMC
 function b_optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMatrix; sync=false,modifier!::Function = (x...)->0.) # sync is only placeholder in this method
+    opt = optimise!(mutateparameters, p, cm; sync=sync,modifier! = modifier!)
+    @show init = opt.minimizer
     nll=NLL(p,cm,mutateparameters,modifier!,10000.)
     @model function poistrick(x=0., nll_input = nll, len = length(mutateparameters))
-        for i in 1:len par[i] ~ Uniform(0,100) end
-        x~Poisson(-nll_input(par))
+        par ~ filldist(Turing.Flat(),len-2)
+        vw ~ filldist(Turing.Flat(),2)
+        transpar = sqrt.(2exp.(.-par)).+1
+        x~Poisson(nll_input([transpar;exp.(vw)]))
+        Turing.@addlogprob! -sum(par)+sum(vw)
+        return exp.([.-par;vw])
     end
-    chain = sample(poistrick(), PG(10),1000)
-    hess = FiniteDiff.finite_difference_hessian(nll,opt.minimizer)
-    nll(opt.minimizer)
-    (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess ,result=opt)
+    lp = LogDensityFunction(poistrick())
+    model = AdvancedHMC.LogDensityModel(
+            LogDensityProblemsAD.ADgradient(Val(:FiniteDifferences), lp,;fdm=FiniteDifferences.forward_fdm(2,1))
+        )
+    AHMCchain = AbstractMCMC.sample(
+      model,
+      AdvancedHMC.NUTS(0.8),
+      1500;
+      n_adapts = 500,
+      initial_params = log.(init*1.1),
+    )
+    Random.seed!(2025)
+    chain = Chains(getfield.(getfield.(AHMCchain,:z),:θ))
+
+    #hess = FiniteDiff.finite_difference_hessian(nll,opt.minimizer)
+    #nll(opt.minimizer)
+    #(minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess ,result=opt)
 end
 
 
