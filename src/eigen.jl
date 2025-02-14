@@ -14,7 +14,9 @@ using Turing
 using AdvancedHMC
 using Random
 using LogDensityProblemsAD
+using LogDensityProblems
 using FiniteDifferences
+using Retry
 
 @rimport socialmixr as smr
 @rimport base as r
@@ -238,34 +240,71 @@ end
 ## optimise! using MCMC
 function b_optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMatrix; sync=false,modifier!::Function = (x...)->0.) # sync is only placeholder in this method
     opt = optimise!(mutateparameters, p, cm; sync=sync,modifier! = modifier!)
-    @show init = opt.minimizer
+    init = opt.minimizer
+    hess = opt.hessian
     nll=NLL(p,cm,mutateparameters,modifier!,10000.)
-    @model function poistrick(x=0., nll_input = nll, len = length(mutateparameters))
-        par ~ filldist(Turing.Flat(),len-2)
-        vw ~ filldist(Turing.Flat(),2)
-        transpar = sqrt.(2exp.(.-par)).+1
-        x~Poisson(nll_input([transpar;exp.(vw)]))
-        Turing.@addlogprob! -sum(par)+sum(vw)
-        return exp.([.-par;vw])
+
+    if (modifier!)==(x...)->0. # i.e. if modifier was not set
+        return runISR(nll, init, hess, 1000)
+    else
+        return runmcmc(nll,init,1000, 500)
+    end
+end
+function runISR(nll, init, hess, n_samples = 1000)
+    props = rand(MvNormal(init, inv(hess)),n_samples*10)|>eachcol
+    lpprops = logpdf.(Ref(MvNormal(init, inv(hess))), props)
+    ld = .-nll.(props)
+    lw = ld.-lpprops
+    w = pweights(exp.(lw.-maximum(lw)))
+    res = sample(props, w, n_samples, replace = true)
+    chain = setinfo(Chains(res), (logdensity=ld,))
+    med = quantile(chain,q=[0.5]).nt[2]
+    nll(med) # update contact matrix via nll
+    (med = med, ld = ld, chain=chain, lp = nothing)
+end
+function runmcmc(nll, init, n_samples = 1000, n_adapts = 500)
+    @model function poistrick(x=0, nll_input = nll, len = length(nll.mutateparameters))
+        lpar ~ filldist(Turing.Flat(),len-2)
+        lvw ~ filldist(Turing.Flat(),2)
+        transpar = sqrt.(2exp.(lpar)).+1
+        x~Poisson(nll_input([transpar;exp.(lvw)]))
+        Turing.@addlogprob! sum(lpar)+sum(lvw)
+        return exp.([lpar;lvw])
     end
     lp = LogDensityFunction(poistrick())
     model = AdvancedHMC.LogDensityModel(
             LogDensityProblemsAD.ADgradient(Val(:FiniteDifferences), lp,;fdm=FiniteDifferences.forward_fdm(2,1))
-        )
-    AHMCchain = AbstractMCMC.sample(
-      model,
-      AdvancedHMC.NUTS(0.8),
-      1500;
-      n_adapts = 500,
-      initial_params = log.(init*1.1),
     )
-    Random.seed!(2025)
-    chain = Chains(getfield.(getfield.(AHMCchain,:z),:θ))
+    # run MCMC. Retry if stopped due to hitting NaN
+    seedint = isempty(serial[1]) ? 1 : pop!(serial[1])
+    AHMCchain=nothing
+    @repeat 20 try
+        Random.seed!(seedint)
+        AHMCchain = AbstractMCMC.sample(
+            model,
+            AdvancedHMC.NUTS(0.8),
+            n_samples+n_adapts;
+            n_adapts = n_adapts,
+            initial_params = [log.((init[1:end-2].-1).^2 ./2);log.(init[end-1:end])].+0.01,
+        )
+    catch e
+        @retry if typeof(e) == ArgumentError seedint+=1 end
+    end
+    push!(serial[2], seedint)
 
-    #hess = FiniteDiff.finite_difference_hessian(nll,opt.minimizer)
-    #nll(opt.minimizer)
-    #(minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess ,result=opt)
+    # post processing
+    transθ = getfield.(getfield.(AHMCchain,:z),:θ)[n_adapts.+(1:n_samples)]
+    len = transθ|>first|>length
+    par, vw = broadcast.(exp,getindex.(transθ, Ref(1:len-2))), broadcast.(exp,getindex.(transθ, Ref(len-1:len)))
+    par = par./sum.(par).* mean(sum.(par))
+    ld = getfield.(getfield.(getfield.(AHMCchain,:z),:ℓπ),:value)
+    chain = setinfo(Chains(vcat.(par,vw)), (logdensity=ld,))
+    med = quantile(chain,q=[0.5]).nt[2]
+    LogDensityProblems.logdensity(lp, log.(med)) # update contact matrix via nll
+    (med = med, ld = ld, chain=chain, lp = lp)
 end
+
+
 
 
 function estimateparameters!(cms, p::Union{Pyramid,AbstractArray{<:Pyramid}}, parameters;sync=false,modifier!::Function = (x...)->0., bayesian=false)
