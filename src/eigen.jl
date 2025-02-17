@@ -244,10 +244,21 @@ function b_optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMa
     hess = opt.hessian
     nll=NLL(p,cm,mutateparameters,modifier!,10000.)
 
-    if (modifier!)==(x...)->0. # i.e. if modifier was not set
+    if applicable(modifier!,nothing) # i.e. if modifier was not set
         return runISR(nll, init, hess, 1000)
     else
-        return runmcmc(nll,init,1000, 500)
+        return runmcmc(nll,init, 1000, 500)
+    end
+end
+function b_optimise!(mutateparameters::Vector{Scalar}, p::AbstractArray{<:Pyramid}, cm::AbstractArray{<:ContactMatrix}; sync = Symbol[], modifier!::Function = (x...)->0.)
+    opt = optimise!(mutateparameters, p, cm; sync = sync, modifier! = modifier!)
+    init = opt.minimizer
+    hess = opt.hessian
+    nlls=NLLs(p,cm,mutateparameters,modifier!,10000.,sync)
+    if  applicable(modifier!,nothing) # i.e. if modifier was not set
+        return runISR(nlls, init, hess, 1000)
+    else
+        return runmcmc(nlls,init, 1000, 500)
     end
 end
 function runISR(nll, init, hess, n_samples = 1000)
@@ -264,8 +275,8 @@ function runISR(nll, init, hess, n_samples = 1000)
 end
 function runmcmc(nll, init, n_samples = 1000, n_adapts = 500)
     @model function poistrick(x=0, nll_input = nll, len = length(nll.mutateparameters))
-        lpar ~ filldist(Turing.Flat(),len-2)
-        lvw ~ filldist(Turing.Flat(),2)
+        lpar ~ filldist(Normal(0,5),len-2)
+        lvw ~ filldist(Normal(0,2),2)
         transpar = sqrt.(2exp.(lpar)).+1
         x~Poisson(nll_input([transpar;exp.(lvw)]))
         Turing.@addlogprob! sum(lpar)+sum(lvw)
@@ -308,11 +319,25 @@ end
 
 
 function estimateparameters!(cms, p::Union{Pyramid,AbstractArray{<:Pyramid}}, parameters;sync=false,modifier!::Function = (x...)->0., bayesian=false)
-    [begin
+    res = Vector{Any}(undef, length(cms))
+    if length(cms)>2
+    Threads.@threads for i in 1:length(cms)
+        (cmt, parms)= (zip(cms, parameters)|>collect)[i]
         firstel = typeof(cmt) <: ContactMatrix ? cmt : first(cmt) # if cmt is an array of ContactMatrix take the first
     opt = !bayesian ? optimise!(parms, p, cmt,sync=sync,modifier! = modifier!) : b_optimise!(parms, p, cmt,sync=sync,modifier! = modifier!)
     firstel.misc[:opt] = opt
-        end for (cmt, parms) in zip(cms, parameters)]
+        res[i]=opt
+        end# for (cmt, parms) in zip(cms, parameters)]
+    else
+        for i in 1:length(cms)
+        (cmt, parms)= (zip(cms, parameters)|>collect)[i]
+        firstel = typeof(cmt) <: ContactMatrix ? cmt : first(cmt) # if cmt is an array of ContactMatrix take the first
+    opt = !bayesian ? optimise!(parms, p, cmt,sync=sync,modifier! = modifier!) : b_optimise!(parms, p, cmt,sync=sync,modifier! = modifier!)
+    firstel.misc[:opt] = opt
+        res[i]=opt
+        end# for (cmt, parms) in zip(cms, parameters)]
+    end
+    res
 end
 
 function overwriteparameters!(c1::ContactMatrix,c2::ContactMatrix, parnames = true) # all if true, vector of parameter names to only ovewrwrite specific parameters

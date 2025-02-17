@@ -50,18 +50,20 @@ function output_fit(
         drc_skeleton,
         dataplots,
         ascertainment=1,
-        preview = false)
+        preview = false,
+        bayesian=false
+    )
     
     zmb_fit = deepcopy(zmb_skeleton)
     parameters  = [getindex.(Ref(cmt.parameters), [:s_infant,:s_vax]) for cmt in zmb_fit]
-    zmb_opt = estimateparameters!(zmb_fit,pyramid,parameters)
+    zmb_opt = estimateparameters!(zmb_fit,pyramid,parameters,bayesian=bayesian)
 
     zmb_plot = plot(dataplots, zmb_fit|>collect; label = ["all contacts" "physical only" "at home" "physical & home"],legend=(0.1,0.96),ylim=(0,0.4), color = [1 1 2 2],linestyle = [:solid :dash],
     title = "empirical matrix (Zimbabwe)")
 
     drc_fit = deepcopy(drc_skeleton)
     parameters  = [getindex.(Ref(cmt.parameters), [:s_infant,:s_vax]) for cmt in drc_fit]
-    drc_opt=estimateparameters!(drc_fit,pyramid, parameters)
+    drc_opt=estimateparameters!(drc_fit,pyramid, parameters,bayesian=bayesian)
 
     drc_plot=plot(dataplots, drc_fit|>collect;label = ["all contacts" "at home"],legend=(0.1,0.96),ylim=(0,0.4),color = [:royalblue :firebrick],
 title = "synthetic matrix (DRC)")
@@ -78,12 +80,13 @@ function output_fit(
         drc_skeleton::AbstractArray,
         dataplots,
         ascertainment=1,
-        preview = false
+        preview = false,
+        bayesian=false
         )
     zmb_copy = deepcopy.(zmb_skeleton)
     zmb_fit = vectoriseNamedTuple(zmb_copy)
     parameters  = [getindex.(Ref(cmt_vec[1].parameters), [:s_infant,:s_vax]) for cmt_vec in zmb_fit]
-    zmb_opt = estimateparameters!(zmb_fit,pyramids,parameters,sync = [:s_infant,:s_vax,:s_partvax])
+    zmb_opt = estimateparameters!(zmb_fit,pyramids,parameters,sync = [:s_infant,:s_vax,:s_partvax],bayesian=bayesian)
 
     zmb_plot = plot.(dataplots, zmb_copy.|>collect;label = ["all contacts" "physical only" "at home" "physical & home"],legend=(0.1,0.96),ylim=(0,0.4), color = [1 1 2 2],linestyle = [:solid :dash],
     title = "empirical matrix (Zimbabwe)")
@@ -92,7 +95,7 @@ function output_fit(
     drc_copy = deepcopy.(drc_skeleton)
     drc_fit = vectoriseNamedTuple(drc_copy)
     parameters  = [getindex.(Ref(cmt_vec[1].parameters), [:s_infant,:s_vax]) for cmt_vec in drc_fit]
-    drc_opt=estimateparameters!(drc_fit,pyramids, parameters,sync=[:s_infant,:s_vax,:s_partvax])
+    drc_opt=estimateparameters!(drc_fit,pyramids, parameters,sync=[:s_infant,:s_vax,:s_partvax],bayesian=bayesian)
 
     drc_plot=plot.(dataplots, drc_copy.|>collect; label = ["all contacts" "at home"],legend=(0.1,0.96),ylim=(0,0.4),color = [:royalblue :firebrick],
 title = "synthetic matrix (DRC)")
@@ -115,7 +118,8 @@ function output_sexual_fit(
         estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w],
         load = nothing,
         ascertainment=1,
-        preview = false
+        preview = false,
+        bayesian=false
     )
     
     if !isnothing(load)
@@ -125,12 +129,12 @@ function output_sexual_fit(
         zmb_fit = deepcopy(zmb_sexual_skeleton)
         overwriteparameters!.(zmb_fit|>collect,zmb_ref|>collect)
         parameters  = [getindex.(Ref(cmt.parameters), estkeys) for cmt in zmb_fit]
-        @time zmb_opt = estimateparameters!(zmb_fit,pyramid,parameters;modifier! = propmix!)
+        @time zmb_opt = estimateparameters!(zmb_fit,pyramid,parameters;modifier! = propmix!,bayesian=bayesian)
         
         drc_fit = deepcopy(drc_sexual_skeleton)
         overwriteparameters!.(drc_fit|>collect,drc_ref|>collect)
         parameters  = [getindex.(Ref(cmt.parameters), estkeys) for cmt in drc_fit]
-        @time drc_opt = estimateparameters!(drc_fit,pyramid,parameters;modifier! = propmix!)
+        @time drc_opt = estimateparameters!(drc_fit,pyramid,parameters;modifier! = propmix!,bayesian=bayesian)
     end
 
     zmb_plot = plot(dataplots, zmb_fit|>collect; ascertainment=ascertainment,label = ["all contacts" "physical only" "at home" "physical & home"],legend=(0.1,0.96),ylim=(0,0.3), color = [1 1 2 2],linestyle = [:solid :dash],
