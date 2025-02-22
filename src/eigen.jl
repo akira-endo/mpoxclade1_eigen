@@ -303,11 +303,21 @@ function runmcmc(nll, init, n_samples = 1000, n_adapts = 500)
     end
     push!(serial[2], seedint)
 
-    # post processing
+    ## post processing
     transθ = getfield.(getfield.(AHMCchain,:z),:θ)[n_adapts.+(1:n_samples)]
     len = transθ|>first|>length
     par, vw = broadcast.(exp,getindex.(transθ, Ref(1:len-2))), broadcast.(exp,getindex.(transθ, Ref(len-1:len)))
-    par = par./sum.(par).* mean(sum.(par))
+
+    # rescale par to meet boundary conditions
+    na = convert(Vector{Float64},nll.cm.misc[:pop])./2
+    denomweights=Ref(na[4:7])./([sum(na[4:7]),1].*nll.cm.misc[:bcond])
+    pa = ((@view el[1:(len-2)÷2]) for el in par)
+    qa = ((@view el[(len-2)÷2+1:end]) for el in par)
+    for (p,q) in zip(pa,qa)
+        p./= sum(denomweights[1].* p)
+        q./= sum(denomweights[2].* q)
+    end
+
     ld = getfield.(getfield.(getfield.(AHMCchain,:z),:ℓπ),:value)
     chain = setinfo(Chains(vcat.(par,vw)), (logdensity=ld,))
     med = quantile(chain,q=[0.5]).nt[2]

@@ -119,7 +119,8 @@ function output_sexual_fit(
         load = nothing,
         ascertainment=1,
         preview = false,
-        bayesian=false
+        bayesian=false,
+        bcond = [0.1,0.01]
     )
     
     if !isnothing(load)
@@ -129,11 +130,13 @@ function output_sexual_fit(
         zmb_fit = deepcopy(zmb_sexual_skeleton)
         overwriteparameters!.(zmb_fit|>collect,zmb_ref|>collect)
         parameters  = [getindex.(Ref(cmt.parameters), estkeys) for cmt in zmb_fit]
+        for fit in zmb_fit fit.misc[:bcond] = copy(bcond) end
         @time zmb_opt = estimateparameters!(zmb_fit,pyramid,parameters;modifier! = propmix!,bayesian=bayesian)
         
         drc_fit = deepcopy(drc_sexual_skeleton)
         overwriteparameters!.(drc_fit|>collect,drc_ref|>collect)
         parameters  = [getindex.(Ref(cmt.parameters), estkeys) for cmt in drc_fit]
+        for fit in drc_fit fit.misc[:bcond] = copy(bcond) end
         @time drc_opt = estimateparameters!(drc_fit,pyramid,parameters;modifier! = propmix!,bayesian=bayesian)
     end
 
@@ -161,7 +164,8 @@ function output_sexual_fit(
         load = nothing,
         ascertainment=1,
         preview = false,
-        sync=true
+        sync=true,
+        bcond = [0.1,0.01]
     )
 
     if !isnothing(load)
@@ -172,7 +176,10 @@ function output_sexual_fit(
         zmb_copy = deepcopy.(zmb_sexual_skeleton)
         zmb_fit = vectoriseNamedTuple(zmb_copy)
         
-        for (fit, ref) in zip(zmb_fit,zmb_ref) overwriteparameters!.(fit, ref) end
+        for (fit, ref) in zip(zmb_fit,zmb_ref) 
+            overwriteparameters!.(fit, ref)
+            fit.misc[:bcond] = copy(bcond)
+        end
         
         parameters  = [
             reduce(vcat,[convert(Vector{Scalar}, getindex.(Ref(cmt_vec[x].parameters), x == 1 ? estkeys : setdiff(estkeys,sync))) for x in 1:length(cmt_vec)])
@@ -183,7 +190,10 @@ function output_sexual_fit(
         drc_copy = deepcopy.(drc_sexual_skeleton)
         drc_fit = vectoriseNamedTuple(drc_copy)
         
-        for (fit, ref) in zip(drc_fit,drc_ref) overwriteparameters!.(fit, ref) end
+        for (fit, ref) in zip(drc_fit,drc_ref) 
+            overwriteparameters!.(fit, ref)
+            fit.misc[:bcond] = copy(bcond)
+        end
 
         parameters  = [
             reduce(vcat,[convert(Vector{Scalar},getindex.(Ref(cmt_vec[x].parameters), x == 1 ? estkeys : setdiff(estkeys,sync))) for x in 1:length(cmt_vec)])

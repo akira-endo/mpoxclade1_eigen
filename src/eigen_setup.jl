@@ -60,7 +60,8 @@ drc2024_original = (;zip([:all, :home] ,contactmatrix.([contact_all, contact_hom
 zmb2015 = parameterise(zmb2015_original, immunity2015)
 zmb2024 = parameterise(zmb2024_original, immunity2024)
 
-function propmix!(p::Pyramid,cm::ContactMatrix, bcond = [0.1,0.01])
+function propmix!(p::Pyramid,cm::ContactMatrix)#, bcond = [0.1,0.01])
+    bcond = cm.misc[:bcond]
     addmatkeys = filter(Base.Fix1(occursin, "_addmat")∘string,keys(cm.parameters))
     
     ind = split.(string.(addmatkeys),Ref("_addmat")).|> (Base.BroadcastFunction(Base.Fix1(parse,Int)))
@@ -80,6 +81,7 @@ function propmix!(p::Pyramid,cm::ContactMatrix, bcond = [0.1,0.01])
     # Rescale to ensure high risk pop size is as specified
     paqa.*=[sum(na[4:7]),1].*bcond./sum_napaqa 
     sum_napaqa.=sum.(broadcast.(*, Ref(na), paqa))
+    #cm.misc[:paqa_denomweights]=Ref(na[4:7])./([sum(na[4:7]),1].*bcond) # save this to reproduce the rescaled parameters later by: paqa./sum(denomweights.*paqa)
     
     vw=[cm.parameters[:addmat_v][],cm.parameters[:addmat_w][]] #v/w: #partners of women / men
     v0=vw[1]/((sqrt(12^2+22^2)/(17.61+5.51))^2+1)
