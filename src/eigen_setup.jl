@@ -28,19 +28,19 @@ function parameterise(cmt, vaccinethreshold::Number) # for drc
     end
     cmskeleton
 end
-function addsexualcontact!(cmt::ContactMatrix, activeage = 10:10:40; modifier!::Function = (x...)->nothing, countryname = "DRC", year = 2024)
+function addsexualcontact!(cmt::ContactMatrix, activeage = 10:10:40; modifier!::Function = (x...)->nothing, countrycode = "COD", year = 2024)
     ind = findall(in(activeage),cmt.ageinterval)
     parkeys = Symbol.(["1_" "2_"],"addmat",ind)
     [cmt.parameters[key]=fill(1.1) for key in parkeys]
     cmt.parameters[:addmat_v]=fill(30.); cmt.parameters[:addmat_w]=fill(30.)
     cmt.addmat = zero(cmt.matrix)
     cmt.misc[:modifier!] = modifier!
-    cmt.misc[:pop]=popsize(cmt.ageinterval, countryname=countryname, year = year)
+    cmt.misc[:pop]=popsize(cmt.ageinterval, countrycode=countrycode, year = year)
     cmt.matrix = repeat([zero(cmt.matrix) cmt.matrix./2],1,2)
     cmt
 end
-function addsexualcontact!(cmts::NamedTuple, activeage = 10:10:40; modifier!::Function = (x...)->nothing, countryname = "DRC", year = 2024)
-    [addsexualcontact!(cmt,activeage;modifier!) for cmt in cmts]
+function addsexualcontact!(cmts::NamedTuple, activeage = 10:10:40; modifier!::Function = (x...)->nothing, countrycode = "COD", year = 2024)
+    [addsexualcontact!(cmt,activeage;modifier! = modifier!, countrycode=countrycode,year=year) for cmt in cmts]
     cmts
 end
 
@@ -51,14 +51,17 @@ immunity2015(x,cm) = x≥40 ? cm.parameters[:s_vax] : (x≥30 ? cm.parameters[:s
 immunity2024(x,cm) = x≥50 ? cm.parameters[:s_vax] : (x≥40 ? cm.parameters[:s_partvax] : (x==0 ? cm.parameters[:s_infant] : cm.parameters[:s_baseline]))
 
 filters = [nothing, (phys_contact=1,),(cnt_home=1,),(phys_contact=1,cnt_home=1)]
-zmb2015_original = (;zip([:all, :phys, :home, :physhome] ,contactmatrix.(:zimbabwe_survey, Ref(tshuapa_h2hag), "Zimbabwe", filters))...)
-drc2015_original = (;zip([:all, :home] ,contactmatrix.([contact_all, contact_home], (tshuapa_h2hag), :COD, year=2015))...)
-zmb2024_original = (;zip([:all, :phys, :home, :physhome] ,contactmatrix.(:zimbabwe_survey, Ref(drc_endemic_ag), "Zimbabwe", filters))...)
+zmb2015_original = (;zip([:all, :phys, :home, :physhome] ,contactmatrix.(:zimbabwe_survey, Ref(tshuapa_h2hag), "COD", filters,year=2013))...)
+drc2015_original = (;zip([:all, :home] ,contactmatrix.([contact_all, contact_home], (tshuapa_h2hag), :COD, year=2013))...)
+zmb2024_original = (;zip([:all, :phys, :home, :physhome] ,contactmatrix.(:zimbabwe_survey, Ref(drc_endemic_ag), "COD", filters,year=2024))...)
 drc2024_original = (;zip([:all, :home] ,contactmatrix.([contact_all, contact_home],Ref(drc_endemic_ag), :COD, year=2024))...)
+bdi2024_original = (;zip([:all, :phys, :home, :physhome] ,contactmatrix.(:zimbabwe_survey, Ref(drc_endemic_ag), "BDI", filters,year=2024))...)
+bdi_s2024_original = (;zip([:all, :home] ,contactmatrix.([contact_all, contact_home],Ref(drc_endemic_ag), :BDI, year=2024))...)
 
 
 zmb2015 = parameterise(zmb2015_original, immunity2015)
 zmb2024 = parameterise(zmb2024_original, immunity2024)
+bdi2024 = parameterise(bdi2024_original, immunity2024)
 
 function propmix!(p::Pyramid,cm::ContactMatrix, bcond = [0.1,0.01])
     addmatkeys = filter(Base.Fix1(occursin, "_addmat")∘string,keys(cm.parameters))
@@ -86,5 +89,6 @@ end
 
 drc2015 = parameterise(drc2015_original, immunity2015)
 drc2024 = parameterise(drc2024_original, immunity2024)
+bdi_s2024 = parameterise(bdi_s2024_original, immunity2024)
 
 

@@ -75,8 +75,8 @@ kivuplot = plot(plot(drc_kivu),ylim=(0,0.5),xtickfontsize=9);
 # -
 
 
-zmb2024_sexual = addsexualcontact!(deepcopy(zmb2024),[15;20:10:40]; modifier! = propmix!, countryname = "DRC",year = 2024);
-drc2024_sexual = addsexualcontact!(deepcopy(drc2024),[15;20:10:40]; modifier! = propmix!, countryname = "DRC",year = 2024);
+zmb2024_sexual = addsexualcontact!(deepcopy(zmb2024),[15;20:10:40]; modifier! = propmix!, countrycode = "COD",year = 2024);
+drc2024_sexual = addsexualcontact!(deepcopy(drc2024),[15;20:10:40]; modifier! = propmix!, countrycode = "COD",year = 2024);
 
 kamituga2024_fit = output_sexual_fit(
     drc_kamituga,
@@ -109,8 +109,8 @@ otherhz2024_fit = output_sexual_fit(
     );
 
 # +
-zmb2024_sexual_b = addsexualcontact!(deepcopy(zmb2024),[15;20:10:40]; modifier! = propmix!, countryname = "Burundi",year = 2024);
-drc2024_sexual_b = addsexualcontact!(deepcopy(drc2024),[15;20:10:40]; modifier! = propmix!, countryname = "Burundi",year = 2024);
+zmb2024_sexual_b = addsexualcontact!(deepcopy(bdi2024),[15;20:10:40]; modifier! = propmix!, countrycode = "BDI",year = 2024);
+drc2024_sexual_b = addsexualcontact!(deepcopy(bdi_s2024),[15;20:10:40]; modifier! = propmix!, countryname = "BDI",year = 2024);
 
 zmb_ref = deepcopy(last.(zmb2015_24_fit|>collect))
 drc_ref = deepcopy(last.(drc2015_24_fit|>collect))
