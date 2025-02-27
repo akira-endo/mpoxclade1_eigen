@@ -1,0 +1,506 @@
+var_name,interpretation
+age10_popratio,ratio of people aged 10-14 in the population
+age10_popratio_male,ratio of males aged 10-14 in the population
+age10_popratio_female,ratio of females aged 10-14 in the population
+age50_popratio,ratio of people aged 50-54 in the population
+age5_popratio_female,ratio of females aged 5-9 in the population
+age5_popratio,ratio of people aged 5-9 in the population
+age5_popratio_male,ratio of males aged 5-9 in the population
+age45_popratio,ratio of people aged 45-49 in the population
+age50_popratio_male,ratio of males aged 50-54 in the population
+age55_popratio_male,ratio of males aged 55-59 in the population
+age0_popratio_female,ratio of females aged 0-4 in the population
+age0_popratio,ratio of people aged 0-4 in the population
+age0_popratio_male,ratio of males aged 0-4 in the population
+age0_ratio_of_rural_females,ratio of females aged 0-4 in the population in rural areas
+age0_ratio_of_rural_males,ratio of males aged 0-4 in the population in rural areas
+age55_ratio_of_urban_males,ratio of males aged 55-59 in the population in urban areas
+age60_popratio_male,ratio of males aged 60-64 in the population
+age50_ratio_of_urban_males,ratio of males aged 50-54 in the population in urban areas
+age5_ratio_of_rural_females,ratio of females aged 5-9 in the population in rural areas
+age55_popratio,ratio of people aged 55-59 in the population
+age5_ratio_of_rural_males,ratio of males aged 5-9 in the population in rural areas
+age60_ratio_of_urban_males,ratio of males aged 60-64 in the population in urban areas
+age15_popratio_female,ratio of females aged 15-19 in the population
+age15_popratio,ratio of people aged 15-19 in the population
+age10_ratio_of_rural_females,ratio of females aged 10-14 in the population in rural areas
+age60_popratio,ratio of people aged 60-64 in the population
+age50_popratio_female,ratio of females aged 50-54 in the population
+age15_popratio_male,ratio of males aged 15-19 in the population
+age10_ratio_of_rural_males,ratio of males aged 10-14 in the population in rural areas
+age15_ratio_of_urban_females,ratio of females aged 15-19 in the population in urban areas
+age50_ratio_of_urban_females,ratio of females aged 50-54 in the population in urban areas
+age60_ratio_of_rural_males,ratio of males aged 60-64 in the population in rural areas
+age65_ratio_of_urban_males,ratio of males aged 65-69 in the population in urban areas
+age15to19_mean_enrolment,mean school enrolment between people aged 15 to 19
+age15_school,number of people (students and teachers) aged 15-19 in schools
+age65_popratio_male,ratio of males aged 65-69 in the population
+SP.DYN.LE00.FE.IN,"Life expectancy at birth, female (years) "
+age10_ratio_of_urban_females,ratio of females aged 10-14 in the population in urban areas
+age0_ratio_of_urban_males,ratio of males aged 0-4 in the population in urban areas
+age5_ratio_of_urban_females,ratio of females aged 5-9 in the population in urban areas
+age0_ratio_of_urban_females,ratio of females aged 0-4 in the population in urban areas
+age5_ratio_of_urban_males,ratio of males aged 5-9 in the population in urban areas
+age55_ratio_of_rural_males,ratio of males aged 55-59 in the population in rural areas
+age55_popratio_female,ratio of females aged 55-59 in the population
+age45_popratio_female,ratio of females aged 45-49 in the population
+age80_ratio_of_urban_females,ratio of females aged 80-84 in the population in urban areas
+age60_ratio_of_urban_females,ratio of females aged 60-64 in the population in urban areas
+age10_ratio_of_urban_males,ratio of males aged 10-14 in the population in urban areas
+age70_ratio_of_urban_females,ratio of females aged 70-74 in the population in urban areas
+age65_popratio,ratio of people aged 65-69 in the population
+age15_ratio_of_urban_males,ratio of males aged 15-19 in the population in urban areas
+age80_popratio,ratio of people aged 80-84 in the population
+age80_ratio_of_urban_males,ratio of males aged 80-84 in the population in urban areas
+age60_popratio_female,ratio of females aged 60-64 in the population
+age55_ratio_of_urban_females,ratio of females aged 55-59 in the population in urban areas
+age45_popratio_male,ratio of males aged 45-49 in the population
+age75_popratio,ratio of people aged 75-79 in the population
+age80_popratio_male,ratio of males aged 80-84 in the population
+age65_ratio_of_urban_females,ratio of females aged 65-69 in the population in urban areas
+age75_popratio_male,ratio of males aged 75-79 in the population
+age70_ratio_of_urban_males,ratio of males aged 70-74 in the population in urban areas
+age45_ratio_of_urban_females,ratio of females aged 45-49 in the population in urban areas
+age70_popratio,ratio of people aged 70-74 in the population
+age75_ratio_of_urban_females,ratio of females aged 75-79 in the population in urban areas
+age75_ratio_of_urban_males,ratio of males aged 75-79 in the population in urban areas
+age15_ratio_of_rural_females,ratio of females aged 15-19 in the population in rural areas
+age85_popratio,ratio of people aged 85-89 in the population
+age50_ratio_of_rural_males,ratio of males aged 50-54 in the population in rural areas
+IT.NET.USER.ZS,Individuals using the Internet (% of population)
+age80_popratio_female,ratio of females aged 80-84 in the population
+age70_popratio_male,ratio of males aged 70-74 in the population
+age65_ratio_of_rural_males,ratio of males aged 65-69 in the population in rural areas
+age70_popratio_female,ratio of females aged 70-74 in the population
+age85_ratio_of_urban_females,ratio of females aged 85-89 in the population in urban areas
+age85_ratio_of_urban_males,ratio of males aged 85-89 in the population in urban areas
+age75_popratio_female,ratio of females aged 75-79 in the population
+age85_popratio_male,ratio of males aged 85-89 in the population
+age85_popratio_female,ratio of females aged 85-89 in the population
+SP.DYN.TFRT.IN,"Fertility rate, total (births per woman)"
+age20_ratio_of_urban_males,ratio of males aged 20-24 in the population in urban areas
+age65_popratio_female,ratio of females aged 65-69 in the population
+age90_popratio,ratio of people aged 90-94 in the population
+primary_pupil_to_teacher_ratio,pupil to teacher ratio in primary schools
+age20_ratio_of_urban_females,ratio of females aged 20-24 in the population in urban areas
+age20_popratio,ratio of people aged 20-24 in the population
+age90_popratio_female,ratio of females aged 90-94 in the population
+age45_ratio_of_urban_males,ratio of males aged 45-49 in the population in urban areas
+age75_ratio_of_rural_males,ratio of males aged 75-79 in the population in rural areas
+age90_ratio_of_urban_males,ratio of males aged 90-94 in the population in urban areas
+age90_ratio_of_urban_females,ratio of females aged 90-94 in the population in urban areas
+age0to4_mean_enrolment,mean school enrolment between people aged 0 to 4
+age0_school,number of people (students and teachers) aged 0-4 in schools
+age20_popratio_female,ratio of females aged 20-24 in the population
+age90_popratio_male,ratio of males aged 90-94 in the population
+age15_ratio_of_rural_males,ratio of males aged 15-19 in the population in rural areas
+age40_popratio,ratio of people aged 40-44 in the population
+age80_ratio_of_rural_males,ratio of males aged 80-84 in the population in rural areas
+age45_ratio_of_rural_males,ratio of males aged 45-49 in the population in rural areas
+age70_ratio_of_rural_males,ratio of males aged 70-74 in the population in rural areas
+SH.DYN.MORT,"Mortality rate, under-5 (per 1,000 live births)"
+SP.POP.GROW,Population growth (annual %)
+age50_urbanratio_female,number of females aged 50-54 in the population in urban areas divided by total number of females aged 50-54
+age60_ratio_of_rural_females,ratio of females aged 60-64 in the population in rural areas
+age60_urbanratio_female,number of females aged 60-64 in the population in urban areas divided by total number of females aged 50-54
+age55_ratio_of_rural_females,ratio of females aged 55-59 in the population in rural areas
+age85_ratio_of_rural_males,ratio of males aged 85-89 in the population in rural areas
+age55_urbanratio_female,ratio of females aged 55-59 in the population
+age95_popratio,ratio of people aged 95-99 in the population
+age20_school,number of people (students and teachers) aged 20-24 in schools
+SP.ADO.TFRT,"Adolescent fertility rate (births per 1,000 women ages 15-19)"
+age90_ratio_of_rural_females,ratio of females aged 90 in the population in rural areas
+age10_school,number of people (students and teachers) aged 10-14 in schools
+age10to14_mean_enrolment,mean school enrolment among people aged 10 to 14
+age60_urbanratio_male,number of males aged 60-64 in the population in urban areas divided by total number of males aged 50-54
+age20to24_mean_enrolment,mean school enrolment among people aged 20 to 24
+age45_urbanratio_female,number of females aged 45-49 in the population in urban areas divided by total number of males aged 45-49
+age40_popratio_female,ratio of females aged 40-44 in the population
+age95_popratio_female,ratio of females aged 95-99 in the population
+age85_ratio_of_rural_females,ratio of females aged 85-89 in the population in rural areas
+age70_urbanratio_male,number of males aged 70-74 in the population in urban areas divided by total number of males aged 70-74
+age20_ratio_of_rural_females,ratio of females aged 20-24 in the population in rural areas
+age20_popratio_male,ratio of males aged 20-24 in the population
+age65_urbanratio_male,number of males aged 65-69 in the population in urban areas divided by total number of males aged 65-69
+age65_male_workpop_ratio,ratio of males aged 65-69 in the working population
+age80_urbanratio_male,number of males aged 80-84 in the population in urban areas divided by total number of males aged 80-84
+age85_urbanratio_male,number of males aged 85-89 in the population in urban areas divided by total number of males aged 85-89
+age90_urbanratio_male,number of males aged 90-94 in the population in urban areas divided by total number of males aged 90-94
+age95_urbanratio_male,number of males aged 95-99 in the population in urban areas divided by total number of males aged 95-99
+age100_urbanratio_male,number of males aged 100-105 in the population in urban areas divided by total number of males aged 100-105
+age40_urbanratio_female,number of females aged 40-44 in the population in urban areas divided by total number of males aged 40-44
+age65_male_workpop_ratio_rural,ratio of males aged 65-69 in the working population in rural areas
+age0_urbanratio_male,number of males aged 0-4 in the population in urban areas divided by total number of males aged 0-4
+age0_urbanratio_female,number of females aged 0-4 in the population in urban areas divided by total number of females aged 0-5
+age65_urbanratio_female,number of females aged 65-69 in the population in urban areas divided by total number of males aged 65-69
+age95_ratio_of_urban_females,ratio of females aged 95-99 in the population in urban areas
+age65_male_workpop_ratio_urban,ratio of males aged 65-69 in the working population in urban areas
+age90_ratio_of_rural_males,ratio of females aged 90-94 in the population in rural areas
+age70_ratio_of_rural_females,ratio of females aged 70-74 in the population in rural areas
+age65_workpop_ratio,ratio of people aged 65-69 in the working population
+age75_urbanratio_male,number of males aged 75-79 in the population in urban areas divided by total number of males aged 75-79
+age70_urbanratio_female,number of females aged 70-74 in the population in urban areas divided by total number of females aged 70-74
+age75_ratio_of_rural_females,ratio of females aged 75-79 in the population in rural areas
+age80_ratio_of_rural_females,ratio of females aged 80-84 in the population in rural areas
+age95_ratio_of_rural_females,ratio of females aged 95-99 in the population in rural areas
+age25_school,number of people (students and teachers) aged 25-29 in schools
+age5_urbanratio_male,number of males aged 0-4 in the population in urban areas divided by total number of males aged 0-4
+age65_workpop_ratio_urban,ratio of people aged 65-69 in the working population in urban areas
+age50_ratio_of_rural_females,ratio of females aged 50-54 in the population in rural areas
+age65_workpop_ratio_rural,ratio of people aged 65-69 in the working population in rural areas
+age55_urbanratio_male,number of males aged 55-59 in the population in urban areas divided by total number of males aged 55-59
+total_female_urban_ratio,total number of females in the population in urban areas divided by total number of females
+SE.SEC.CUAT.UP.ZS,"Educational attainment, at least completed upper secondary, population 25+, total (%) (cumulative)"
+age5_urbanratio_female,number of females aged 5-9 in the population in urban areas divided by total number of females aged 5-9
+age65_ratio_of_rural_females,ratio of females aged 65-69 in the population in rural areas
+EG.ELC.ACCS.ZS,Access to electricity (% of population)
+age35_urbanratio_female,number of females aged 35-39 in the population in urban areas divided by total number of females aged 35-39
+age40_ratio_of_urban_females,ratio of females aged 40-44 in the population in urban areas
+age30_urbanratio_female,number of females aged 30-34 in the population in urban areas divided by total number of females aged 30-34
+age50_urbanratio_male,number of males aged 50-54 in the population in urban areas divided by total number of males aged 50-54
+SH.XPD.CHEX.PP.CD,Current health expenditure per capita (current US$) 
+age25_urbanratio_female,number of females aged 25-29 in the population in urban areas divided by total number of females aged 25-29
+age85_urbanratio_female,number of females aged 85-89 in the population in urban areas divided by total number of females aged 85-89
+age80_urbanratio_female,number of females aged 80-84 in the population in urban areas divided by total number of females aged 80-84
+age100_urbanratio_female,number of females aged 100-104 in the population in urban areas divided by total number of females aged 100-104
+age95_urbanratio_female,number of females aged 95-99 in the population in urban areas divided by total number of females aged 95-99
+age90_urbanratio_female,number of females aged 90-94 in the population in urban areas divided by total number of females aged 90-94
+age75_urbanratio_female,number of females aged 75-79 in the population in urban areas divided by total number of females aged 75-79
+age95_ratio_of_urban_males,ratio of males aged 95-99 in the population in urban areas
+SP.URB.TOTL.IN.ZS,Urban population (% of total population)
+SP.RUR.TOTL.ZS,Rural population (% of total population)
+total_male_urban_ratio,total number of males in the population in urban areas divided by total number of males
+age10_urbanratio_male,number of males aged 10-14 in the population in urban areas divided by total number of males aged 10-14
+age20_urbanratio_female,number of females aged 20-24 in the population in urban areas divided by total number of females aged 20-24
+age95_popratio_male,ratio of males aged 95-99 in the population  
+SH.STA.TRAF.P5,"Mortality caused by road traffic injury (per 100,000 population)"
+age65_female_workpop_ratio,ratio of females aged 65-69 in the working population
+age65_female_workpop_ratio_urban,ratio of females aged 65-69 in the working population in urban areas
+age10_urbanratio_female,number of males aged 10-14 in the population in urban areas divided by total number of males aged 10-14
+age65_female_workpop_ratio_rural,ratio of females aged 65-69 in the working population in rural areas
+age45_urbanratio_male,number of males aged 45-49 in the population in urban areas divided by total number of males aged 45-49
+age15_urbanratio_male,number of males aged 15-19 in the population in urban areas divided by total number of males aged 15-19
+age5to9_mean_enrolment,mean school enrolment between people aged 5 to 9
+age5_school,number of people (students and teachers) aged 5-9 in schools
+SH.MMR.RISK.ZS, Lifetime risk of maternal death (%)
+age15_urbanratio_female,number of males aged 15-19 in the population in urban areas divided by total number of males aged 15-19
+age25_urbanratio_male,number of males aged 25-29 in the population in urban areas divided by total number of males aged 25-29
+age30_urbanratio_male,number of males aged 30-34 in the population in urban areas divided by total number of males aged 30-34
+age40_urbanratio_male,number of males aged 40-44 in the population in urban areas divided by total number of males aged 40-44
+SP.DYN.AMRT.MA,"Mortality rate, adult, male (per 1,000 male adults)"
+age20_urbanratio_male,number of males aged 20-24 in the population in urban areas divided by total number of males aged 20-24
+age40_popratio_male,ratio of males aged 40-44 in the population
+age95_ratio_of_rural_males,ratio of males aged 95-99 in the population in rural areas
+age40_ratio_of_rural_males,ratio of males aged 40-44 in the population in rural areas
+age35_urbanratio_male,number of males aged 35-39 in the population in urban areas divided by total number of males aged 35-39
+age45_ratio_of_rural_females,ratio of females aged 45-49 in the population in rural areas
+age65_school,number of people (students and teachers) aged 65-69 In schools
+age100_ratio_of_rural_females,ratio of females aged 100-104 in the population in rural areas
+secondary_pupil_to_teacher_ratio,pupil to teacher ratio in secondary schools
+age25_ratio_of_rural_females,ratio of females aged 25-29 in the population in rural areas
+age25_popratio_female,ratio of females aged 25-29 in the population
+age25_ratio_of_urban_females,ratio of females aged 25-29 in the population in urban areas
+age100_popratio_female,ratio of females aged 100-104 in the population
+age20_ratio_of_rural_males,ratio of males aged 20-24 in the population in rural areas
+age100_ratio_of_urban_females,ratio of females aged 100-104 in the population in urban areas
+SH.XPD.CHEX.PC.CD,Current health expenditure per capita (current US$)
+SE.PRM.CMPT.ZS,"Primary completion rate, total (% of relevant age group)"
+age100_popratio,ratio of people aged 100-104 in the population
+age40_ratio_of_urban_males,ratio of people aged 40-44 in the population in urban areas
+age30_school,number of people (students and teachers) aged 30-34 in schools
+age15_female_workpop_ratio_rural,ratio of females aged 15-19 in the working population in rural areas
+age35_school,number of people (students and teachers) aged 35-39 in schools
+age85_number_urban_females,number of females aged 85-89 in the population in urban areas
+age15_workpop_ratio_rural,ratio of people aged 15-19 in the working population in rural areas
+age90_number_urban_females,number of females aged 90-94 in the population in urban areas
+age90_popfemale,number of females aged 90-94 in the population
+age85_number_urban_males,number of males aged 85-89 in the population in urban areas
+age90_number_urban_males,number of males aged 90-94 in the population in urban areas
+age85_popfemale,number of females aged 85-89 in the population
+age15_workpop_ratio,ratio of people aged 15-19 in the working population
+preprimary_pupil_to_teacher_ratio,pupil to teacher ratio in pre-primary schools
+age15_female_workpop_ratio,ratio of females aged 15-19 in the working population
+age95_popfemale,number of females aged 95-99 in the population
+age95_number_urban_females,number of females aged 95-99 in the population in urban areas
+age60_workpop_ratio_rural,ratio of people aged 60-64 in the population in rural areas
+age60_male_workpop_ratio_rural,ratio of males aged 60-64 in the working population in rural areas
+age80_number_urban_females,number of females aged 80-84 in the population in urban areas
+age90_popmale,number of males aged 90-94 in the population
+SH.TBS.INCD,"Incidence of tuberculosis (per 100,000 people)"
+age100_popfemale,ratio of females aged 100-104 in the population
+age95_number_urban_males,number of males aged 95-99 in the population in urban areas
+age40_ratio_of_rural_females,ratio_of of females aged 40-44 in the population in rural areas
+IT.CEL.SETS.P2,Mobile cellular subscriptions (per 100 people)
+age100_number_urban_females,number of females aged 100-104 in the population in urban areas
+age95_popmale,number of males aged 95-99 in the population
+age80_number_urban_males,number of males aged 80-84 in the population in urban areas
+age85_popmale,number of males aged 85-89 in the population
+age15_male_workpop_ratio,ratio of males aged 15-19 in the working population
+age15_male_workpop_ratio_rural,ratio of males aged 15-19 in the working population in rural areas
+age60_male_workpop_ratio,ratio of males aged 60-64 in the working population
+age75_number_urban_females,number of females aged 75-79 in the population in urban areas
+age60_workpop_ratio,ratio of people aged 60-64 in the working population
+TX.VAL.MRCH.CD.WT,Merchandise exports (current US$)
+age80_popfemale,ratio of females aged 80-84 in the population
+age75_number_urban_males,ratio of males aged 75-79 in the population in urban areas
+age60_female_workpop_ratio_rural,ratio of females aged 60-64 in the working population in rural areas
+age95_number_rural_females,ratio of females aged 95-99 in the population in rural areas
+age90_number_rural_females,ratio of females aged 90-94 in the population in rural areas
+age70_number_urban_males,ratio of males aged 70-74 in the population in urban areas
+age70_number_urban_females,ratio of females aged 70-74 in the population in urban areas
+age80_popmale,number of males aged 80-84 in the population
+NY_GDP_MKTP_PP_CD,"GDP, PPP (current international $) "
+age100_number_rural_females,ratio of females aged 100-104 in the population in rural areas
+age100_number_urban_males,ratio of males aged 100-104 in the population in urban areas
+age100_popmale,number of males aged 100-104 in the population
+age60_female_workpop_ratio,ratio of females aged 60-64 in the working population
+age15_workpop_ratio_urban,ratio of people aged 15-19 in the working population
+age60_male_workpop_ratio_urban,ratio of males aged 60-64 in the working population in urban areas
+age15_female_workpop_ratio_urban,ratio of females aged 15-19 in the working population in urban areas
+age100_ratio_of_urban_males,ratio of of males aged 100-104 in the population in urban areas
+age95_number_rural_males,ratio of males aged 95-99 in the population in rural areas
+tertiary_pupil_to_teacher_ratio,pupil to teacher ratio in tertiary education institutions
+age65_number_urban_females,number of females aged 65-69 in the population
+age100_ratio_of_rural_males,ratio of of males aged 100-104 in the population in rural areas
+age60_workpop_ratio_urban,ratio of people aged 60-64 in the working population in urban areas
+age15_male_workpop_ratio_urban,ratio of males aged 15-19 in the working population in urban areas
+age65_number_urban_males,number of males aged 65-69 in the population in urban areas
+age90_number_rural_males,ratio of people aged 90-94 in the population in rural areas
+NE.EXP.GNFS.ZS,Exports of goods and services (% of GDP)
+age75_popfemale,number of females aged 75-79 in the population
+age100_popratio_male,ratio of males aged 100-104 in the population
+age60_school,number of people (students and teachers) aged 60-64 in schools
+age60_number_urban_females,number of people aged 60-64 in the population in urban areas
+age85_number_rural_females,number of people aged 85-89 in the population in rural areas
+age35_popratio,ratio of people aged 35-39 in the population
+age75_popmale,ratio of males aged 75-79 in the population
+age60_number_urban_males,ratio of males aged 60-64 in the population in urban areas
+age60_female_workpop_ratio_urban,ratio of females aged 60-64 in the working population in urban areas
+age25_workpop_ratio_urban,ratio of people aged 25-29 in the working population in urban areas
+age100_number_rural_males,ratio of males aged 100-104 in the population in rural areas
+age55_number_urban_females,ratio of females aged 55-59 in the population in urban areas
+age70_popfemale,number of females aged 70-74 in the population
+age35_ratio_of_rural_males,ratio of of males aged 35-39 in the population in rural areas
+age0_number_rural_females,number of  females aged 0-4 in the population in rural areas
+age55_number_urban_males,number of males aged 55-59 in the population in urban areas
+age35_popratio_female,ratio of females aged 35-39 in the population
+age0_number_rural_males,number of people aged 0-4 in the population in rural areas
+age70_popmale,number of males aged 70-74 in the population
+age85_number_rural_males,number of people aged 85-89 in the population in rural areas
+primary_end_age,mean age at completing primary school education
+secondary_start_age,mean age at starting secondary school education
+age55_male_workpop_ratio_rural,ratio of males aged 55-59 in the working population in rural areas
+age5_number_rural_females,number of females aged 5-9 in the population in rural areas
+age50_number_urban_females,number of females aged 50-54 in the population in urban areas
+age25_ratio_of_urban_males,ratio of of males aged 25-29 in the population in urban areas
+age25_popratio,number of people aged 25-29 in the population
+age5_number_rural_males,ratio of males aged 5-9 in the population in rural areas
+age25_female_workpop_ratio_urban,ratio of females aged 25-29 in the population in urban areas
+age30_workpop_ratio_urban,ratio of people aged 30-34 in the population in urban areas
+age65_popfemale,number of females aged 65-69 in the population
+age50_number_urban_males,number of people aged 50-54 in the population in urban areas
+age35_popratio_male,ratio of males aged 35-39 in the population
+age35_workpop_ratio_urban,ratio of people aged 35-39 in the working population in urban areas
+age40_workpop_ratio_urban,ratio of people aged 40-44 in the working population in urban areas
+age10_number_rural_females,number of females aged 10-14 in the population in rural areas
+age10_number_rural_males,number of males aged 10-14 in the population in rural areas
+age65_popmale,number of people aged 65-69 in the population
+age20_num_students,number of students aged 20-24 in schools
+age80_number_rural_females,number of females aged 80-84 in the population in rural areas
+age25_male_workpop_ratio_urban,number of males aged 25-29 in the population in urban areas
+age45_number_urban_females,number of females aged 45-49 in the population in urban areas
+age15_number_rural_females,number of females aged 15-19 in the population in rural areas
+age55_workpop_ratio_rural,ratio of people aged 55-59 in the working population in rural areas
+age30_female_workpop_ratio_urban,ratio of females aged 30-34 in the working population in urban areas
+age45_number_urban_males,number of males aged 45-49 in the population in urban areas
+SH.DYN.AIDS.ZS,"Prevalence of HIV, total (% of population ages 15-49)"
+age15_number_rural_males,number of people aged 15-19 in the population in rural areas
+age60_popfemale,number of females aged 60-64 in the population
+age20_number_rural_females,number of females aged 20-24 in the population in rural areas
+age30_male_workpop_ratio_urban,ratio of males aged 30-34 in the working population in urban areas
+age80_number_rural_males,number of people aged 80-84 in the population in rural areas
+age35_female_workpop_ratio_urban,ratio of females aged 35-39 in the working population in urban areas
+age45_workpop_ratio_urban,ratio of people aged 45-49 in the working population in urban areas
+age30_ratio_of_rural_females,ratio of of females aged 30-34 in the population in rural areas
+age60_popmale,number of males aged 60-64 in the population
+age40_female_workpop_ratio_urban,ratio of females aged 40-44 in the working population in urban areas
+age35_ratio_of_urban_females,ratio of females aged 35-39 in the population in urban areas
+age40_number_urban_females,number of females aged 40-44 in the population in urban areas
+age35_male_workpop_ratio_urban,ratio of males aged 35-39 in the working population in urban areas
+age50_male_workpop_ratio_rural,ratio of males aged 50-54 in the working population in rural areas
+age20_number_rural_males,number of males aged 20-24 in the population in rural areas
+age40_male_workpop_ratio_urban,ratio of males aged 40-44 in the working population in urban areas
+age25_number_rural_females,number of females aged 25-29 in the population in rural areas
+age40_number_urban_males,number of males aged 40-44 in the population in urban areas
+age55_male_workpop_ratio,ratio of people aged 55-59 in the working population
+age55_popfemale,number of females aged 55-59 in the population
+age55_female_workpop_ratio_rural,ratio of females aged 55-59 in the working population in rural areas
+age55_popmale,number of males aged 55-59 in the population
+age55_num_teachers,number of teachers aged 55-59 in schools
+age20_workpop_ratio_urban,ratio of people aged 20-24 in the working population in urban areas
+age25_number_rural_males,number of people aged 25-29 in the population in rural areas
+age25_workpop_ratio,ratio of people aged 25-29 in the working population
+age45_male_workpop_ratio_rural,ratio of males aged 45-49 in the population in rural areas
+total_rural_female,total number of females in the population in rural areas
+total_number_rural_females,total number of females in the population in rural areas
+age45_female_workpop_ratio_urban,ratio of females aged 45-49 in the working population in urban areas
+age35_number_urban_females,number of females aged 35-39 in the population in urban areas
+total_urban_female,total number of females in the population in urban areas
+total_number_urban_females,total number of females in the population in urban areas
+age0_popfemale,number of females aged 0-4 in the population
+age35_number_urban_males,number of males aged 35-39 in the population in urban areas
+age30_number_rural_females,number of males aged 30-34 in the population in rural areas
+age0_popmale,number of males aged 0-4 in the population
+total_rural_male,total number of males in the population in rural areas
+total_number_rural_males,total number of males in the population in rural areas
+SM.POP.NETM,Net migration
+age25_num_teachers,number of teachers aged 25-29 in schools
+number_sec_teachers,number of secondary school teachers
+secondary_end_age,mean age at completing secondary school education
+tertiary_end_age,mean age at completing tertiary education
+tertiary_start_age,mean age at starting tertiary education
+age20_male_workpop_ratio_urban,ratio of males aged 20-24 in the working population in urban areas
+age45_num_teachers,number of teachers aged 45-49 in schools
+age50_num_teachers,number of teachers aged 50-54 in schools
+total_urban_male,total number of males in urban areas
+total_number_urban_males,total number of males in urban areas
+age50_popfemale,number of females aged 50-54 in the population
+age35_num_teachers,number of teachers aged 35-39 in schools
+age60_num_teachers,number of teachers aged 60-64 in schools
+age50_popmale,number of males aged 50-54 in the population
+age20_female_workpop_ratio_rural,ratio of females aged 20-24 in the working population in rural areas
+age30_number_urban_females,number of females aged 30-34 in the population in urban areas
+age20_female_workpop_ratio_urban,ratio of females aged 20-24 in the working population in urban areas
+age5_popfemale,number of females aged 5-9 in the population
+age45_male_workpop_ratio_urban,ratio of males aged 45-49 in the working population in urban areas
+age30_number_urban_males,number of males aged 30-34 in the population in urban areas
+age30_number_rural_males,number of males aged 30-34 in the population in rural areas
+age40_school,number of people (students and teachers) aged 40-44 in schools
+age40_male_workpop_ratio_rural,male_workpop of rural aged 40-44 in the population in ratio areas
+age5_popmale,number of males aged 5-9 in the population
+age50_workpop_ratio_urban,ratio of people aged 50-54 in the working population in urban areas
+age25_male_workpop_ratio,ratio of people aged 25-29 in the working population
+age50_workpop_ratio_rural,ratio of people aged 50-54 in the working population in rural areas
+age45_school,number of people (students and teachers) aged 45-49 in schools
+AG.LND.AGRI.ZS,Agricultural land (% of land area)
+age25_female_workpop_ratio,ratio of females aged 25-29 in the working population
+age35_number_rural_females,number of females aged 35-39 in the population in rural areas
+age55_workpop_ratio,ratio of people aged 55-59 in the working population
+age75_number_rural_females,number of females aged 75-79 in the population in rural areas
+age40_num_teachers,number of teachers aged 40-45 in schools
+age30_ratio_of_urban_females,ratio of females aged 30-34 in the population in urban areas
+age30_num_teachers,number of teachers aged 30-34 in schools
+age55_school,number of people (students and teachers) aged 55-59 in schools
+SL.UEM.TOTL.NE.ZS,"Unemployment, total (% of total labor force)"
+age75_number_rural_males,number of males aged 75-79 in the population in rural areas
+age10_popfemale,number of females aged 10-14 in the population
+age30_workpop_ratio,ratio of people aged 30-34 in the working population
+age50_female_workpop_ratio_urban,ratio of females aged 50-54 in the working population in urban areas
+age35_male_workpop_ratio_rural,ratio of males aged 35-39 in the working population in rural areas
+age10_popmale,number of males aged 10-14 in the population
+age45_popfemale,number of females aged 45-49 in the population
+age45_popmale,number of males aged 45-49 in the population
+age25_number_urban_females,number of females aged 25-29 in the population in urban areas
+age25_number_urban_males,number of males aged 25-29 in the population in urban areas
+SE.XPD.TOTL.GD.ZS,"Government expenditure on education, total (% of government expenditure)"
+age35_number_rural_males,number of males aged 35-39 in the population in rural areas
+age20_num_teachers,number of teachers aged 20-24 in schools
+age40_number_rural_females,number of females aged 40-44 in the population in rural areas
+age45_workpop_ratio_rural,ratio of people aged 45-49 in the working population in rural areas
+age50_female_workpop_ratio_rural,ratio of females aged 50-54 in the working population in rural areas
+age30_ratio_of_rural_males,ratio of of males aged 30-34 in the population in rural areas
+age55_female_workpop_ratio,ratio of females aged 55-59 in the working population
+age35_ratio_of_urban_males,ratio of males aged 35-39 in the population in urban areas
+age25_popratio_male,number of people aged 25-29 in the population
+age35_workpop_ratio,ratio of people aged 35-39 in the working population
+age15_popfemale,number of females aged 15-19 in the population
+age30_female_workpop_ratio,ratio of females aged 30-34 in the working population
+age5_num_students,number of students aged 5-9 in schools
+age40_workpop_ratio,ratio of people aged 40-44 in the working population
+age15_popmale,number of males aged 15-19 in the population
+age40_popmale,number of males aged 40-44 in the population
+EN.POP.DNST,Population density (people per sq. km of land area) 
+age20_workpop_ratio_rural,ratio of people aged 20-24 in the working population
+age30_popratio_male,number of males aged 30-34 in the population
+age70_number_rural_males,number of males aged 70-74 in the population in rural areas
+age40_popfemale,number of females aged 40-44 in the population
+age40_workpop_ratio_rural,ratio of people aged 40-44 in the working population in rural areas
+SL.UEM.TOTL.FE.ZS,"Unemployment, female (% of female labor force) "
+age20_number_urban_females,number of females aged 20-24 in the population in urban areas
+age45_number_rural_females,number of males aged 45-49 in the population in rural areas
+age50_male_workpop_ratio,ratio of males aged 50-54 in the working population
+age20_number_urban_males,number of males aged 20-24 in the population in urban areas
+age15_num_students,number of students aged 15-19 in schools
+age50_male_workpop_ratio_urban,ratio of males aged 50-54 in the working population in urban areas
+age50_school,number of people (students and teachers) aged 50-54 in schools
+age30_male_workpop_ratio_rural,ratio of males aged 30-34 in the working population in rural areas
+age35_female_workpop_ratio,ratio of females aged 35-39 in the working population
+age40_number_rural_males,number of males aged 40-44 in the population in rural areas
+preprimary_end_age,mean age at completing preprimary school education
+primary_start_age,mean age at starting primary school education
+age25_ratio_of_rural_males,ratio of males aged 25-29 in the population in rural areas
+age70_number_rural_females,number of females aged 70-74 in the population in rural areas
+age55_male_workpop_ratio_urban,ratio of males aged 55-59 in the working population in urban areas
+age45_female_workpop_ratio_rural,ratio of females aged 45-49 in the working population in rural areas
+age40_female_workpop_ratio,ratio of people aged 40-44 in the working population
+age35_workpop_ratio_rural,ratio of people aged 35-39 in the working population in rural areas
+age30_male_workpop_ratio,ratio of males aged 30-34 in the working population
+age35_ratio_of_rural_females,ratio of females aged 35-39 in the population in rural areas
+age30_popratio,number of people aged 30-34 in the population
+age20_popfemale,number of females aged 20-24 in the population
+age20_female_workpop_ratio,ratio of females aged 20-24 in the working population
+age35_female_workpop_ratio_rural,ratio of females aged 35-39 in the working population in rural areas
+age40_female_workpop_ratio_rural,ratio of females aged 40-44 in the working population in rural areas
+age15_number_urban_males,number of males aged 15-19 in the population in urban areas
+age35_popmale,number of males aged 35-39 in the population
+age20_popmale,number of males aged 20-24 in the population
+age65_number_rural_males,number of males aged 65-69 in the population in rural areas
+age50_number_rural_females,number of females aged 50-54 in the population in rural areas
+age45_number_rural_males,number of males aged 45-49 in the population in rural areas
+age10_number_urban_males,number of males aged 10-14 in the population in urban areas
+age15_number_urban_females,number of females aged 15-19 in the population in urban areas
+age45_workpop_ratio,ratio of people aged 45-49 in the working population
+age35_popfemale,number of females aged 35-39 in the population
+age65_number_rural_females,number of females aged 65-69 in the population in rural areas
+age30_popratio_female,ratio of females aged 30-34 in the population
+age30_workpop_ratio_rural,ratio of females aged 30-34 in the working population in rural areas
+age45_female_workpop_ratio,ratio of females aged 45-49 in the working population
+age5_number_urban_males,number of males aged 5-9 in the population in urban areas
+age30_female_workpop_ratio_rural,ratio of females aged 30-34 in the working population in urban areas
+age0_num_students,number of students aged 0-4 in schools
+age10_number_urban_females,number of females aged 10-14 in the population in urban areas
+age10_num_students,number of students aged 10-14 in schools
+age35_male_workpop_ratio,ratio of males aged 35-39 in the working population
+age5_number_urban_females,number of females aged 5-9 in the population in urban areas
+age30_ratio_of_urban_males,ratio of males aged 30-34 in the population in urban areas
+age20_workpop_ratio,ratio of people aged 20-24 in the working population
+age45_male_workpop_ratio,ratio of males aged 45-49 in the working population
+age25_workpop_ratio_rural,ratio of people aged 25-29 in the working population
+age25_popfemale,number of females aged 25-29 in the population
+age50_number_rural_males,number of males aged 50-54 in the population in rural areas
+age0_number_urban_males,number of males aged 0-4 in the population in urban areas
+age60_number_rural_males,number of males aged 60-64 in the population in rural areas
+age55_number_rural_females,number of people aged 55-59 in the population in rural areas
+age30_popmale,number of males aged 30-34 in the population
+age0_number_urban_females,number of females aged 0-4 in the population in urban areas
+age25_male_workpop_ratio_rural,ratio of males aged 25-29 in the working population in rural areas
+age25_popmale,number of males aged 25-29 in the population
+age40_male_workpop_ratio,ratio of males aged 40-44 in the working population
+age55_workpop_ratio_urban,ratio of people aged 55-59 in the working population
+total_popfemale,total number of females in the population
+pop_female_total,total number of females in the population
+age30_popfemale,number of females aged 30-34 in the population
+pop_total,total number of people in the population
+age20_male_workpop_ratio,ratio of males aged 20-24 in the working population
+age50_workpop_ratio,ratio of males aged 50-54 in the working population
+age20_male_workpop_ratio_rural,ratio of males aged 20-24 in the working population in rural areas
+age55_female_workpop_ratio_urban,ratio of females aged 55-59 in the working population in urban areas
+age65_num_teachers,number of teachers aged 65-69
+total_popmale,total number of males in the population
+pop_male_total,total number of males in the population
+age60_number_rural_females,number of females aged 60-64 in the population in rural areas
+age50_female_workpop_ratio,ratio of females aged 50-54 in the working population
+age25_female_workpop_ratio_rural,ratio of females aged 25-29 in the working population in rural areas
+age55_number_rural_males,number of males aged 55-59 in the population in rural areas
+total_urbanratio_female,number of females in the population in urban areas divided by total number of females
+total_urbanratio_male,number of males in the population in urban areas divided by total number of males
