@@ -84,15 +84,22 @@ end
 makeagegrouplabel(p::Pyramid)=makeagegrouplabel(p.ageinterval)
 
 # contact matrices
+function partvax_cov(countrycode, year, cessation = 1980)
+    unvax_age = year-cessation
+    vaxageint = [0,unvax_age÷10*10,unvax_age+1,(unvax_age÷10+1)*10]
+    popsize(vaxageint,countrycode=string(countrycode),year=year)[2:3]|>Base.Fix2(normalize,1)|>last
+end
 function contactmatrix(surveyname::Symbol, ageinterval::AbstractVector, countries = nothing, filter = nothing, sus_func = x->one(0.);year, refyear = 2013, refcountrycode="ZWE")
-    demogchange = popsize(ageinterval,countrycode=countries,year=year)./popsize(ageinterval,countrycode=refcountrycode,year=refyear)
+    partcov=partvax_cov(countries, year)
+    demogchange = popsize(ageinterval, countrycode=countries, year = year)./popsize(ageinterval,countrycode=refcountrycode,year=refyear)
     cmt = socialmixr_eig(surveyname, ageinterval, get_country(refcountrycode).name,filter;susceptibility=demogchange)
-    ContactMatrix([cmt.matrix], ageinterval, convert(Vector{Vector{Union{Scalar,Float64}}},[map.(sus_func,ageinterval)]),PDict(),[zero(cmt.matrix)],Dict{Symbol,Any}(:issynthetic=>false))
+    ContactMatrix([cmt.matrix], ageinterval, convert(Vector{Vector{Union{Scalar,Float64}}},[map.(sus_func,ageinterval)]),PDict(),[zero(cmt.matrix)],Dict{Symbol,Any}(:issynthetic=>false,:partcov=>partcov))
 end
 function contactmatrix(syntheticdata::AbstractDict, ageinterval::AbstractVector, countrycode_s, sus_func = x->one(0.);year=2024,refyear = 2020)
+    partcov=partvax_cov(countrycode_s, year)
     demogchange = popsize(ageinterval,countrycode=string(countrycode_s),year=year)./popsize(ageinterval,countrycode=string(countrycode_s),year=refyear)
     cmt = synthetic_eig(syntheticdata, ageinterval, countrycode_s;year=year,susceptibility=demogchange)
-    ContactMatrix([cmt.matrix], ageinterval, convert(Vector{Vector{Union{Scalar,Float64}}},[map.(sus_func,ageinterval)]),PDict(),[zero(cmt.matrix)],Dict{Symbol,Any}(:issynthetic=>true)) # temporary fix of (0:15).*5 in place of ageintervel
+    ContactMatrix([cmt.matrix], ageinterval, convert(Vector{Vector{Union{Scalar,Float64}}},[map.(sus_func,ageinterval)]),PDict(),[zero(cmt.matrix)],Dict{Symbol,Any}(:issynthetic=>true,:partcov=>partcov))
 end
 
 contactmatrix(surveyname::Symbol, p::Pyramid, countries = nothing, filter = nothing, sus_func = x->one(0.);year,refyear = 2013, refcountrycode="ZWE")= contactmatrix(surveyname, p.ageinterval, countries, filter, sus_func;year=year,refyear = refyear, refcountrycode=refcountrycode)
