@@ -116,10 +116,10 @@ zmb_ref = deepcopy(last.(zmb2015_24_fit|>collect))
 drc_ref = deepcopy(last.(drc2015_24_fit|>collect))
 
 for cmt in zmb_ref
-    cmt.parameters[:s_vax].=1-(1-cmt.parameters[:s_vax][])*0.7
+    cmt.parameters[:s_vax].=1-(1-cmt.parameters[:s_vax][])*1.0
 end
 for cmt in drc_ref
-    cmt.parameters[:s_vax].=1-(1-cmt.parameters[:s_vax][])*0.7
+    cmt.parameters[:s_vax].=1-(1-cmt.parameters[:s_vax][])*1.0
 end
 
 burundi2024_fit = output_sexual_fit(
