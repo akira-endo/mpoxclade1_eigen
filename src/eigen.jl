@@ -173,7 +173,8 @@ function synthetic_eig(contactdata, ageinterval, countrycode::Nothing; susceptib
 end
 
 # next generation matrix
-function ngm(cm::ContactMatrix, R0 = nothing) 
+function ngm(cm::ContactMatrix, R0 = nothing)
+    cm.parameters[:s_partvax] .= 1-(1-cm.parameters[:s_vax][])*cm.misc[:partcov] # set partvax
     cmt = broadcast.(*,cm.susceptibility', broadcast.(+,cm.matrix, cm.addmat))
     if !isnothing(R0) cmt./=dominanteigval(cm) end
     cmt|>transpose
@@ -216,13 +217,11 @@ end
 
 function (nll::NLL)(x)
         for (parameter, el) in zip(nll.mutateparameters,x) parameter.=el end
-        nll.cm.parameters[:s_partvax] .= (1+nll.cm.parameters[:s_vax][])/2 # effectiveness among partvax to be half s_vax
         modifier_ll = nll.modifier!(nll.p, nll.cm)
         -likelihood(nll.p,nll.cm)-modifier_ll
 end
 function (nlls::NLLs)(x)
         for (parameter, el) in zip(nlls.mutateparameters,x) parameter.=el end
-        first(nlls.cm).parameters[:s_partvax] .= (1+first(nlls.cm).parameters[:s_vax][])/2 # effectiveness among partvax to be half s_vax
         modifier_ll = mean(nlls.modifier!.(nlls.p, nlls.cm))
         if !(isempty(nlls.sync)) for i in 1:length(nlls.cm)-1 overwriteparameters!(nlls.cm[i+1], nlls.cm[i],nlls.sync) end end # assume cm is in growing order in terms of # parameters
         -sum(likelihood.(nlls.p,nlls.cm))-modifier_ll
