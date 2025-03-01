@@ -5,7 +5,7 @@ if(!require (grid)) install.packages("grid")
 
 ## Standardisation #############################################################
 
-load("data/pca_indicators/dataset_final.RData")
+load("../data/pca_indicators/dataset_final.RData")
 
 means_df = data.frame(array(dim=c(nrow(dataset_final),ncol(dataset_final)-3)))
 sd_df= data.frame(array(dim=c(nrow(dataset_final),ncol(dataset_final)-3)))
@@ -36,17 +36,17 @@ relative_load <- as.data.frame(relative_load[,1:4])
 relative_load$var_name <- rownames(relative_load)
 
 # Getting interpretations for each variable
-mapping <- read.csv("data/pca_indicators/variables_interpretation.csv",header = T)
+mapping <- read.csv("../data/pca_indicators/variables_interpretation.csv",header = T)
 relative_load_explained <- merge(relative_load, mapping,by="var_name", all.x=T)
-write.csv(relative_load_explained, file="data/pca_indicators/relative_load_explained.csv")
+write.csv(relative_load_explained, file="../data/pca_indicators/relative_load_explained.csv")
 
 ## Preparations for plotting ###################################################
-
+dot_alpha = 0.3
 # Get coordinates
 ind.coord <- as.data.frame(get_pca_ind(pca)$coord)
 rownames(ind.coord) <- all_std_wide$iso3c
 individual_coord = ind.coord[,1:4]
-write.csv(individual_coord,file="data/pca_indicators/indiv_coordinates_final.csv")
+write.csv(individual_coord,file="../data/pca_indicators/indiv_coordinates_final.csv")
 
 # Get country-continent mapping
 library(countrycode)
@@ -70,17 +70,17 @@ masterplot <- function(pc_x, pc_y){
   grid.xaxis(gp=gpar(fontsize=8))
   grid.points(ind.coord[continent_mapping$continent=="Europe",pc_x],
               ind.coord[continent_mapping$continent=="Europe",pc_y],
-              pch=16,gp=gpar(cex = 0.6,lwd=1, col="blue",alpha=0.15),default.units = 'native')
+              pch=16,gp=gpar(cex = 0.6,lwd=1, col="blue",alpha=dot_alpha),default.units = 'native')
   grid.points(ind.coord[continent_mapping$continent=="Asia",pc_x],
               ind.coord[continent_mapping$continent=="Asia",pc_y],
-              pch=16,gp=gpar(cex = 0.6,lwd=1, col="green",alpha=0.15),default.units = 'native')
+              pch=16,gp=gpar(cex = 0.6,lwd=1, col="green",alpha=dot_alpha),default.units = 'native')
   grid.points(ind.coord[continent_mapping$continent=="Oceania",pc_x],
               ind.coord[continent_mapping$continent=="Oceania",pc_y],
-              pch=16,gp=gpar(cex = 0.6,lwd=1, col="#00f0d4",alpha=0.15),default.units = 'native')
+              pch=16,gp=gpar(cex = 0.6,lwd=1, col="#00f0d4",alpha=dot_alpha),default.units = 'native')
   
   grid.points(ind.coord[(continent_mapping$continent=="Africa")&(!continent_mapping$iso %in% coi),pc_x],
               ind.coord[(continent_mapping$continent=="Africa")&(!continent_mapping$iso %in% coi),pc_y],
-              pch=16,gp=gpar(cex = 0.6,lwd=1, col="red",alpha=0.15),default.units = 'native')
+              pch=16,gp=gpar(cex = 0.6,lwd=1, col="red",alpha=dot_alpha),default.units = 'native')
   grid.points(ind.coord[(continent_mapping$continent=="Africa")&(continent_mapping$iso %in% c("BDI","COD")),pc_x],
               ind.coord[(continent_mapping$continent=="Africa")&(continent_mapping$iso %in% c("BDI","COD")),pc_y],
               pch=16,gp=gpar(cex = 0.6,lwd=1, col="red"),default.units = 'native')
@@ -92,7 +92,7 @@ masterplot <- function(pc_x, pc_y){
               pch=1,gp=gpar(cex = 0.6,lwd=1, col="black"),default.units = 'native')
   grid.points(ind.coord[continent_mapping$continent=="Americas",pc_x],
               ind.coord[continent_mapping$continent=="Americas",pc_y],
-              pch=16,gp=gpar(cex = 0.6,lwd=1, col="#ff992b",alpha=0.15),default.units = 'native')
+              pch=16,gp=gpar(cex = 0.6,lwd=1, col="#ff992b",alpha=dot_alpha),default.units = 'native')
   
   
   grid.text('ZWE',
@@ -187,23 +187,23 @@ pc_legend=function(row,column)
   
   grid.polygon(x = c(0.11,0.19,0.19,0.11),
                y = c(0.3,0.3,0.33,0.33),
-               gp=gpar(col='red',alpha=0.15,fill='red'))
+               gp=gpar(col='red',alpha=dot_alpha,fill='red'))
   
   grid.polygon(x = c(0.40,0.48,0.48,0.40),
                y = c(0.3,0.3,0.33,0.33),
-               gp=gpar(col='#ff992b',alpha=0.15,fill='#ff992b'))
+               gp=gpar(col='#ff992b',alpha=dot_alpha,fill='#ff992b'))
   
   grid.polygon(x = c(0.75,0.83,0.83,0.75),
                y = c(0.3,0.3,0.33,0.33),
-               gp=gpar(col='green',alpha=0.15,fill='green'))
+               gp=gpar(col='green',alpha=dot_alpha,fill='green'))
   
   grid.polygon(x = c(0.25,0.33,0.33,0.25),
                y = c(0.20,0.20,0.23,0.23),
-               gp=gpar(col='blue',alpha=0.15,fill='blue'))
+               gp=gpar(col='blue',alpha=dot_alpha,fill='blue'))
   
   grid.polygon(x = c(0.55,0.63,0.63,0.55),
                y = c(0.20,0.20,0.23,0.23),
-               gp=gpar(col='#00f0d4',alpha=0.15,fill='#00f0d4'))
+               gp=gpar(col='#00f0d4',alpha=dot_alpha,fill='#00f0d4'))
   
   grid.text('Africa',y = unit(0.32,'npc'), x = unit(0.29,'npc'))
   grid.text('Americas',y = unit(0.32,'npc'), x = unit(0.61,'npc'))
@@ -218,7 +218,7 @@ pc_legend=function(row,column)
 coi = c("COD","BDI","ZWE")
 
 # Final plot
-png('data/pca_indicators/combined_pca_plot.png',height=21,width=21,units='cm',res=300,pointsize=10)
+svg('../figs/Sfigs/raw/pca.svg',height=21*0.394,width=21*0.394,pointsize=10)
 pushViewport(plotViewport(c(1,1,1,1)))
 pushViewport(viewport(layout=grid.layout(nrow=3,ncol=3)))
 paneller(1,1)
