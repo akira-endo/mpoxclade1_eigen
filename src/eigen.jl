@@ -138,7 +138,7 @@ end
 
 
 function socialmixr_eig(surveyname, ageinterval, countries = nothing, filter=nothing; susceptibility = 1, addmat = zeros(fill(size(ageinterval)[1],2)...))
-    smixr = @suppress( rcopy(r.suppressWarnings(smr.contact_matrix(surveyname, countries = countries, var"age.limits" = ageinterval, filter = filter,symmetric=true,var"return.demography"=true,var"estimated.contact.age"="mean"))) )
+    smixr = @suppress( rcopy(r.suppressWarnings(smr.contact_matrix(surveyname, countries = countries, var"age.limits" = ageinterval, filter = filter,symmetric=true,var"return.demography"=true,var"estimated.contact.age"="sample"))) )
     cmt = smixr[:matrix]
     if countries=="Zimbabwe" cmt./=2 end # as Zimbabwe contact matrix contain two days of contacts per participant
     cmt .+= addmat
