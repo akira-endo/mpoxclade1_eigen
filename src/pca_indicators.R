@@ -247,10 +247,10 @@ pc_legend=function(row,column)
   grid.text('Variance explained by each PC',
             y = unit(0.8,'npc'))
   
-  grid.text('PC1\n32.7%',y = unit(0.70,'npc'), x = unit(0.35,'npc'))
-  grid.text('PC2\n9.5%',y = unit(0.70,'npc'), x = unit(0.65,'npc'))
-  grid.text('PC3\n6.6%',y = unit(0.55,'npc'), x = unit(0.35,'npc'))
-  grid.text('PC4\n5.4%',y = unit(0.55,'npc'), x = unit(0.65,'npc'))
+  grid.text('PC1\n43.6%',y = unit(0.70,'npc'), x = unit(0.35,'npc'))
+  grid.text('PC2\n12.6%',y = unit(0.70,'npc'), x = unit(0.65,'npc'))
+  grid.text('PC3\n8.8%',y = unit(0.55,'npc'), x = unit(0.35,'npc'))
+  grid.text('PC4\n7.2%',y = unit(0.55,'npc'), x = unit(0.65,'npc'))
   
   
   grid.polygon(x = c(0.11,0.19,0.19,0.11),
