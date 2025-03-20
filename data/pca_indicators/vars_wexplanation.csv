@@ -1,0 +1,119 @@
+var_name,include,interpretation
+AG.LND.AGRI.ZS,1,Agricultural land (% of land area)
+age0_popratio,1,ratio of people aged 0-4 in the population
+age0_popratio_female,0,ratio of females aged 0-4 in the population
+age0_popratio_male,0,ratio of males aged 0-4 in the population
+age0_school,1,proportion of the population aged 0-4 in schools (students and teachers)
+age10_popratio,1,ratio of people aged 10-14 in the population
+age10_popratio_female,0,ratio of females aged 10-14 in the population
+age10_popratio_male,0,ratio of males aged 10-14 in the population
+age10_school,1,proportion of the population aged 10-14 in schools (students and teachers)
+age100_popratio,1,ratio of people aged 100-104 in the population
+age100_popratio_female,0,ratio of females aged 100-104 in the population
+age100_popratio_male,0,ratio of males aged 100-104 in the population
+age15_popratio,1,ratio of people aged 15-19 in the population
+age15_popratio_female,0,ratio of females aged 15-19 in the population
+age15_popratio_male,0,ratio of males aged 15-19 in the population
+age15_school,1,proportion of the population aged 15-19 in schools (students and teachers)
+age15_workpop_ratio,1,ratio of people aged 15-19 in the working population
+age20_popratio,1,ratio of people aged 20-24 in the population
+age20_popratio_female,0,ratio of females aged 20-24 in the population
+age20_popratio_male,0,ratio of males aged 20-24 in the population
+age20_school,1,proportion of the population aged 20-24 in schools (students and teachers
+age20_workpop_ratio,1,ratio of people aged 20-24 in the working population
+age25_popratio,1,number of people aged 25-29 in the population
+age25_popratio_female,0,ratio of females aged 25-29 in the population
+age25_popratio_male,0,number of people aged 25-29 in the population
+age25_school,1,proportion of the population aged 25-29 in schools (students and teachers)
+age25_workpop_ratio,1,ratio of people aged 25-29 in the working population
+age30_popratio,1,number of people aged 30-34 in the population
+age30_popratio_female,0,ratio of females aged 30-34 in the population
+age30_popratio_male,0,number of males aged 30-34 in the population
+age30_school,1,proportion of the population aged 30-34 in schools (students and teachers)
+age30_workpop_ratio,1,ratio of people aged 30-34 in the working population
+age35_popratio,1,ratio of people aged 35-39 in the population
+age35_popratio_female,0,ratio of females aged 35-39 in the population
+age35_popratio_male,0,ratio of males aged 35-39 in the population
+age35_school,1,proportion of the population aged 35-39 in schools (students and teachers)
+age35_workpop_ratio,1,ratio of people aged 35-39 in the working population
+age40_popratio,1,ratio of people aged 40-44 in the population
+age40_popratio_female,0,ratio of females aged 40-44 in the population
+age40_popratio_male,0,ratio of males aged 40-44 in the population
+age40_school,1,proportion of the population aged 40-44 in schools (students and teachers)
+age40_workpop_ratio,1,ratio of people aged 40-44 in the working population
+age45_popratio,1,ratio of people aged 45-49 in the population
+age45_popratio_female,0,ratio of females aged 45-49 in the population
+age45_popratio_male,0,ratio of males aged 45-49 in the population
+age45_school,1,proportion of the population aged 45-49 in schools (students and teachers)
+age45_workpop_ratio,1,ratio of people aged 45-49 in the working population
+age5_popratio,1,ratio of people aged 5-9 in the population
+age5_popratio_female,0,ratio of females aged 5-9 in the population
+age5_popratio_male,0,ratio of males aged 5-9 in the population
+age5_school,1,proportion of the population aged 5-9 in schools (students and teachers)
+age50_popratio,1,ratio of people aged 50-54 in the population
+age50_popratio_female,0,ratio of females aged 50-54 in the population
+age50_popratio_male,0,ratio of males aged 50-54 in the population
+age50_school,1,proportion of the population aged 50-54 in schools (students and teachers)
+age50_workpop_ratio,1,ratio of males aged 50-54 in the working population
+age55_popratio,1,ratio of people aged 55-59 in the population
+age55_popratio_female,0,ratio of females aged 55-59 in the population
+age55_popratio_male,0,ratio of males aged 55-59 in the population
+age55_school,1,proportion of the population aged 55-59 in schools (students and teachers)
+age55_workpop_ratio,1,ratio of people aged 55-59 in the working population
+age60_popratio,1,ratio of people aged 60-64 in the population
+age60_popratio_female,0,ratio of females aged 60-64 in the population
+age60_popratio_male,0,ratio of males aged 60-64 in the population
+age60_school,1,proportion of the population aged 60-64 in schools (students and teachers)
+age60_workpop_ratio,1,ratio of people aged 60-64 in the working population
+age65_popratio,1,ratio of people aged 65-69 in the population
+age65_popratio_female,0,ratio of females aged 65-69 in the population
+age65_popratio_male,0,ratio of males aged 65-69 in the population
+age65_school,1,proportion of the population aged 65-69 in schools (students and teachers)
+age65_workpop_ratio,1,ratio of people aged 65-69 in the working population
+age70_popratio,1,ratio of people aged 70-74 in the population
+age70_popratio_female,0,ratio of females aged 70-74 in the population
+age70_popratio_male,0,ratio of males aged 70-74 in the population
+age75_popratio,1,ratio of people aged 75-79 in the population
+age75_popratio_female,0,ratio of females aged 75-79 in the population
+age75_popratio_male,0,ratio of males aged 75-79 in the population
+age80_popratio,1,ratio of people aged 80-84 in the population
+age80_popratio_female,0,ratio of females aged 80-84 in the population
+age80_popratio_male,0,ratio of males aged 80-84 in the population
+age85_popratio,1,ratio of people aged 85-89 in the population
+age85_popratio_female,0,ratio of females aged 85-89 in the population
+age85_popratio_male,0,ratio of males aged 85-89 in the population
+age90_popratio,1,ratio of people aged 90-94 in the population
+age90_popratio_female,0,ratio of females aged 90-94 in the population
+age90_popratio_male,0,ratio of males aged 90-94 in the population
+age95_popratio,1,ratio of people aged 95-99 in the population
+age95_popratio_female,0,ratio of females aged 95-99 in the population
+age95_popratio_male,0,ratio of males aged 95-99 in the population  
+EG.ELC.ACCS.ZS,1,Access to electricity (% of population)
+EN.POP.DNST,1,Population density (people per sq. km of land area) 
+IT.CEL.SETS.P2,1,Mobile cellular subscriptions (per 100 people)
+IT.NET.USER.ZS,1,Individuals using the Internet (% of population)
+NE.EXP.GNFS.ZS,1,Exports of goods and services (% of GDP)
+pop_total,0,total number of people in the population
+SE.SEC.CUAT.UP.ZS,1,"Educational attainment, at least completed upper secondary, population 25+, total (%) (cumulative)"
+SE.XPD.TOTL.GD.ZS,1,"Government expenditure on education, total (% of government expenditure)"
+SH.DYN.AIDS.ZS,1,"Prevalence of HIV, total (% of population ages 15-49)"
+SH.DYN.MORT,1,"Mortality rate, under-5 (per 1,000 live births)"
+SH.MMR.RISK.ZS,1, Lifetime risk of maternal death (%)
+SH.STA.TRAF.P5,1,"Mortality caused by road traffic injury (per 100,000 population)"
+SH.TBS.INCD,1,"Incidence of tuberculosis (per 100,000 people)"
+SH.XPD.CHEX.PC.CD,1,Current health expenditure per capita (current US$)
+SH.XPD.CHEX.PP.CD,1,Current health expenditure per capita (current US$) 
+SL.UEM.TOTL.FE.ZS,1,"Unemployment, female (% of female labor force) "
+SL.UEM.TOTL.NE.ZS,1,"Unemployment, total (% of total labor force)"
+SM.POP.NETM,1,Net migration as a proportion of total population
+SP.ADO.TFRT,1,"Adolescent fertility rate (births per 1,000 women ages 15-19)"
+SP.DYN.AMRT.MA,1,"Mortality rate, adult, male (per 1,000 male adults)"
+SP.DYN.LE00.FE.IN,1,"Life expectancy at birth, female (years) "
+SP.DYN.TFRT.IN,1,"Fertility rate, total (births per woman)"
+SP.POP.GROW,1,Population growth (annual %)
+SP.RUR.TOTL.ZS,1,Rural population (% of total population)
+SP.URB.TOTL.IN.ZS,1,Urban population (% of total population)
+total_urbanratio_female,1,number of females in the population in urban areas divided by total number of females
+total_urbanratio_male,1,number of males in the population in urban areas divided by total number of males
+TX.VAL.MRCH.CD.WT,1,Merchandise exports (current US$) per capita
+NY.GDP.PCAP.PP.KD,1,"GDP per capita, PPP (constant 2021 international $)"
