@@ -4,7 +4,6 @@ if(!require (countrycode)) install.packages("countrycode")
 if(!require (grid)) install.packages("grid")
 
 ## Standardisation #############################################################
-
 load("../data/pca_indicators/dataset_final.RData")
 
 means_df = data.frame(array(dim=c(nrow(dataset_final),ncol(dataset_final)-3)))
@@ -36,8 +35,8 @@ relative_load <- as.data.frame(relative_load[,1:4])
 relative_load$var_name <- rownames(relative_load)
 
 # Getting interpretations for each variable
-mapping <- read.csv("../data/pca_indicators/variables_interpretation.csv",header = T)
-relative_load_explained <- merge(relative_load, mapping,by="var_name", all.x=T)
+mapping <- read.csv("../data/pca_indicators/vars_wexplanation.csv",header = T)
+relative_load_explained <- merge(relative_load, mapping[,c('var_name','interpretation')],by="var_name", all.x=T)
 write.csv(relative_load_explained, file="../data/pca_indicators/relative_load_explained.csv")
 
 ## Preparations for plotting ###################################################
@@ -64,7 +63,6 @@ masterplot <- function(pc_x, pc_y){
                                                 round(max(ind.coord[,pc_y]))+3),
                             xscale=c(round(min(ind.coord[,pc_x]))-3,
                                      round(max(ind.coord[,pc_x]))+3)))#)NEW
-  #grid.newpage()
   grid.rect()
   grid.yaxis(gp=gpar(fontsize=8))
   grid.xaxis(gp=gpar(fontsize=8))
@@ -94,27 +92,31 @@ masterplot <- function(pc_x, pc_y){
               ind.coord[continent_mapping$continent=="Americas",pc_y],
               pch=16,gp=gpar(cex = 0.6,lwd=1, col="#ff992b",alpha=dot_alpha),default.units = 'native')
   
+  if (((pc_x==3)&(pc_y==2))|((pc_x==4)&(pc_y==2))|((pc_x==4)&(pc_y==3))){
+    grid.text('ZWE',
+              y = unit((ind.coord[continent_mapping$iso=='ZWE',pc_y]-
+                          (round(min(ind.coord[,pc_y]))-3))/
+                         ((round(max(ind.coord[,pc_y]))+3)-(round(min(ind.coord[,pc_y]))-3)),'npc'), 
+              x = unit((ind.coord[continent_mapping$iso=='ZWE',pc_x]-
+                          (round(min(ind.coord[,pc_x]))-3))/
+                         ((round(max(ind.coord[,pc_x]))+3)-(round(min(ind.coord[,pc_x]))-3))+0.075,'npc'),
+              gp=gpar(fontsize=6,fontface='bold'))
+  }
   
-  grid.text('ZWE',
-            y = unit((ind.coord[continent_mapping$iso=='ZWE',pc_y]-
-                        (round(min(ind.coord[,pc_y]))-3))/
-                       ((round(max(ind.coord[,pc_y]))+3)-(round(min(ind.coord[,pc_y]))-3))-0.04,'npc'), 
-            x = unit((ind.coord[continent_mapping$iso=='ZWE',pc_x]-
-                        (round(min(ind.coord[,pc_x]))-3))/
-                       ((round(max(ind.coord[,pc_x]))+3)-(round(min(ind.coord[,pc_x]))-3)),'npc'),
-            gp=gpar(fontsize=6,fontface='bold'))
-  
-  if ((pc_x==4)&(pc_y==3)){
-    grid.text('BDI',
-              y = unit((ind.coord[continent_mapping$iso=='BDI',pc_y]-
+  else{
+    grid.text('ZWE',
+              y = unit((ind.coord[continent_mapping$iso=='ZWE',pc_y]-
                           (round(min(ind.coord[,pc_y]))-3))/
                          ((round(max(ind.coord[,pc_y]))+3)-(round(min(ind.coord[,pc_y]))-3))+0.04,'npc'), 
-              x = unit((ind.coord[continent_mapping$iso=='BDI',pc_x]-
+              x = unit((ind.coord[continent_mapping$iso=='ZWE',pc_x]-
                           (round(min(ind.coord[,pc_x]))-3))/
                          ((round(max(ind.coord[,pc_x]))+3)-(round(min(ind.coord[,pc_x]))-3)),'npc'),
               gp=gpar(fontsize=6,fontface='bold'))
   }
-  else{
+  
+  
+  
+  if ((pc_x==4)&(pc_y==3)){
     grid.text('BDI',
               y = unit((ind.coord[continent_mapping$iso=='BDI',pc_y]-
                           (round(min(ind.coord[,pc_y]))-3))/
@@ -125,29 +127,73 @@ masterplot <- function(pc_x, pc_y){
               gp=gpar(fontsize=6,fontface='bold'))
   }
   
-  if ((pc_x==2)&(pc_y==1)){
-    grid.text('COD',
-              y = unit((ind.coord[continent_mapping$iso=='COD',pc_y]-
+  else if((pc_x==3)&(pc_y==1)){
+    grid.text('BDI',
+              y = unit((ind.coord[continent_mapping$iso=='BDI',pc_y]-
                           (round(min(ind.coord[,pc_y]))-3))/
-                         ((round(max(ind.coord[,pc_y]))+3)-(round(min(ind.coord[,pc_y]))-3))+0.04,'npc'), 
-              x = unit((ind.coord[continent_mapping$iso=='COD',pc_x]-
+                         ((round(max(ind.coord[,pc_y]))+3)-(round(min(ind.coord[,pc_y]))-3)),'npc'), 
+              x = unit((ind.coord[continent_mapping$iso=='BDI',pc_x]-
+                          (round(min(ind.coord[,pc_x]))-3))/
+                         ((round(max(ind.coord[,pc_x]))+3)-(round(min(ind.coord[,pc_x]))-3))-0.06,'npc'),
+              gp=gpar(fontsize=6,fontface='bold'))
+  }
+  
+  else if((pc_x==4)&(pc_y==1)){
+    grid.text('BDI',
+              y = unit((ind.coord[continent_mapping$iso=='BDI',pc_y]-
+                          (round(min(ind.coord[,pc_y]))-3))/
+                         ((round(max(ind.coord[,pc_y]))+3)-(round(min(ind.coord[,pc_y]))-3)),'npc'), 
+              x = unit((ind.coord[continent_mapping$iso=='BDI',pc_x]-
+                          (round(min(ind.coord[,pc_x]))-3))/
+                         ((round(max(ind.coord[,pc_x]))+3)-(round(min(ind.coord[,pc_x]))-3))+0.06,'npc'),
+              gp=gpar(fontsize=6,fontface='bold'))
+  }
+  
+  else if((pc_x==2)&(pc_y==1)){
+    grid.text('BDI',
+              y = unit((ind.coord[continent_mapping$iso=='BDI',pc_y]-
+                          (round(min(ind.coord[,pc_y]))-3))/
+                         ((round(max(ind.coord[,pc_y]))+3)-(round(min(ind.coord[,pc_y]))-3))-0.04,'npc'), 
+              x = unit((ind.coord[continent_mapping$iso=='BDI',pc_x]-
                           (round(min(ind.coord[,pc_x]))-3))/
                          ((round(max(ind.coord[,pc_x]))+3)-(round(min(ind.coord[,pc_x]))-3)),'npc'),
               gp=gpar(fontsize=6,fontface='bold'))
   }
   
-  else if ((pc_x==3)&(pc_y==1)){
+  else{
+    grid.text('BDI',
+              y = unit((ind.coord[continent_mapping$iso=='BDI',pc_y]-
+                          (round(min(ind.coord[,pc_y]))-3))/
+                         ((round(max(ind.coord[,pc_y]))+3)-(round(min(ind.coord[,pc_y]))-3))+0.04,'npc'), 
+              x = unit((ind.coord[continent_mapping$iso=='BDI',pc_x]-
+                          (round(min(ind.coord[,pc_x]))-3))/
+                         ((round(max(ind.coord[,pc_x]))+3)-(round(min(ind.coord[,pc_x]))-3)),'npc'),
+              gp=gpar(fontsize=6,fontface='bold'))
+  }
+  
+  if ((pc_x==3)&(pc_y==1)){
     grid.text('COD',
               y = unit((ind.coord[continent_mapping$iso=='COD',pc_y]-
                           (round(min(ind.coord[,pc_y]))-3))/
                          ((round(max(ind.coord[,pc_y]))+3)-(round(min(ind.coord[,pc_y]))-3)),'npc'), 
               x = unit((ind.coord[continent_mapping$iso=='COD',pc_x]-
                           (round(min(ind.coord[,pc_x]))-3))/
-                         ((round(max(ind.coord[,pc_x]))+3)-(round(min(ind.coord[,pc_x]))-3))+0.07,'npc'),
+                         ((round(max(ind.coord[,pc_x]))+3)-(round(min(ind.coord[,pc_x]))-3))+0.075,'npc'),
               gp=gpar(fontsize=6,fontface='bold'))
   }
   
-  else{
+  else if ((pc_x==4)&(pc_y==1)){
+    grid.text('COD',
+              y = unit((ind.coord[continent_mapping$iso=='COD',pc_y]-
+                          (round(min(ind.coord[,pc_y]))-3))/
+                         ((round(max(ind.coord[,pc_y]))+3)-(round(min(ind.coord[,pc_y]))-3)),'npc'), 
+              x = unit((ind.coord[continent_mapping$iso=='COD',pc_x]-
+                          (round(min(ind.coord[,pc_x]))-3))/
+                         ((round(max(ind.coord[,pc_x]))+3)-(round(min(ind.coord[,pc_x]))-3))-0.075,'npc'),
+              gp=gpar(fontsize=6,fontface='bold'))
+  }
+  
+  else if ((pc_x==3)&(pc_y==2)){
     grid.text('COD',
               y = unit((ind.coord[continent_mapping$iso=='COD',pc_y]-
                           (round(min(ind.coord[,pc_y]))-3))/
@@ -158,10 +204,32 @@ masterplot <- function(pc_x, pc_y){
               gp=gpar(fontsize=6,fontface='bold'))
   }
   
+  else if ((pc_x==2)&(pc_y==1)){
+    grid.text('COD',
+              y = unit((ind.coord[continent_mapping$iso=='COD',pc_y]-
+                          (round(min(ind.coord[,pc_y]))-3))/
+                         ((round(max(ind.coord[,pc_y]))+3)-(round(min(ind.coord[,pc_y]))-3))-0.04,'npc'), 
+              x = unit((ind.coord[continent_mapping$iso=='COD',pc_x]-
+                          (round(min(ind.coord[,pc_x]))-3))/
+                         ((round(max(ind.coord[,pc_x]))+3)-(round(min(ind.coord[,pc_x]))-3)),'npc'),
+              gp=gpar(fontsize=6,fontface='bold'))
+  }
+  
+  else{
+    grid.text('COD',
+              y = unit((ind.coord[continent_mapping$iso=='COD',pc_y]-
+                          (round(min(ind.coord[,pc_y]))-3))/
+                         ((round(max(ind.coord[,pc_y]))+3)-(round(min(ind.coord[,pc_y]))-3))+0.04,'npc'), 
+              x = unit((ind.coord[continent_mapping$iso=='COD',pc_x]-
+                          (round(min(ind.coord[,pc_x]))-3))/
+                         ((round(max(ind.coord[,pc_x]))+3)-(round(min(ind.coord[,pc_x]))-3)),'npc'),
+              gp=gpar(fontsize=6,fontface='bold'))
+  }
   grid.text(paste0('PC',as.character(pc_x)),y = unit(0,'npc')+unit(-2.7,'lines'),gp = gpar(fontsize=9,fontface='bold',col = 'black'))
   grid.text(paste0('PC',as.character(pc_y)),x = unit(0,'npc')+unit(-2.7,'lines'),rot=90,gp = gpar(fontsize=9,fontface='bold',col = 'black'))
   popViewport()
 }
+
 
 paneller=function(row,column)
 {
@@ -179,10 +247,10 @@ pc_legend=function(row,column)
   grid.text('Variance explained by each PC',
             y = unit(0.8,'npc'))
   
-  grid.text('PC1\n47.9%',y = unit(0.70,'npc'), x = unit(0.35,'npc'))
-  grid.text('PC2\n12.4%',y = unit(0.70,'npc'), x = unit(0.65,'npc'))
-  grid.text('PC3\n10.4%',y = unit(0.55,'npc'), x = unit(0.35,'npc'))
-  grid.text('PC4\n5.4%',y = unit(0.55,'npc'), x = unit(0.65,'npc'))
+  grid.text('PC1\n43.6%',y = unit(0.70,'npc'), x = unit(0.35,'npc'))
+  grid.text('PC2\n12.6%',y = unit(0.70,'npc'), x = unit(0.65,'npc'))
+  grid.text('PC3\n8.8%',y = unit(0.55,'npc'), x = unit(0.35,'npc'))
+  grid.text('PC4\n7.2%',y = unit(0.55,'npc'), x = unit(0.65,'npc'))
   
   
   grid.polygon(x = c(0.11,0.19,0.19,0.11),
