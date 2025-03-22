@@ -82,6 +82,9 @@ masterplot <- function(pc_x, pc_y){
   grid.points(ind.coord[(continent_mapping$continent=="Africa")&(continent_mapping$iso %in% c("BDI","COD")),pc_x],
               ind.coord[(continent_mapping$continent=="Africa")&(continent_mapping$iso %in% c("BDI","COD")),pc_y],
               pch=16,gp=gpar(cex = 0.6,lwd=1, col="red"),default.units = 'native')
+                grid.points(ind.coord[(continent_mapping$continent=="Africa")&(continent_mapping$iso %in% c("BDI","COD")),pc_x],
+              ind.coord[(continent_mapping$continent=="Africa")&(continent_mapping$iso %in% c("BDI","COD")),pc_y],
+              pch=1,gp=gpar(cex = 0.6,lwd=1, col="black"),default.units = 'native')
   grid.points(ind.coord[continent_mapping$iso=="ZWE",pc_x],
               ind.coord[continent_mapping$iso=="ZWE",pc_y],
               pch=16,gp=gpar(cex = 0.6,lwd=1, col="red"),default.units = 'native')
