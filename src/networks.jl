@@ -36,11 +36,9 @@ function approxR0(gh, gl, gc, sizes_high = (500, 100))
     nd_M = mean(d_M,StatsBase.weights(d_M)) # neighbour degree for male
     d_F = degree(gs)[size .+ (1:sizes_high[2])]
     nd_F = mean(d_F,StatsBase.weights(d_F)) # neighbour degree for female
-    ngm = [0 0 0 nd_F mean(d_F) 0
-        fill(C*sizes_high[1]/size,1,6)
-        fill(C*(1-sizes_high[1]/size),1,6)
-nd_M mean(d_M) 0 0 0 0
- fill(C*sizes_high[2]/size,1,6)
- fill(C*(1-sizes_high[2]/size),1,6)]
+    ngm = [0 0 nd_F mean(d_F)*sizes_high[2]/size
+        fill(C,1,4)
+nd_M mean(d_M)*sizes_high[1]/size 0 0
+ fill(C,1,4)]
     eigen(ngm).values[end]|>Real
 end
