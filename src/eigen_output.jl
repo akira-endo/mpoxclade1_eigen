@@ -289,10 +289,4 @@ function vaccineRmap(cmt, R0adjfactor; targetidx = 5:6, R0baseline = 0.82, ve = 
         redmap=(1 .-Rmap./(dominanteigval(cmt)/R0adjfactor*R0baseline))   
         (Rmap=Rmap,redmap=redmap)
 end
-
-savefigname(filename::AbstractString; save = true) = plt->
-begin 
-    @suppress if save savefig(plt,filename)|>display end
-    @suppress display(plt)
-end 
     
