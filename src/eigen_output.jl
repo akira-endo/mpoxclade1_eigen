@@ -49,18 +49,19 @@ function output_fit(
         zmb_skeleton::NamedTuple,
         drc_skeleton,
         dataplots,
+        estkeys = [:s_infant,:s_vax],
         ascertainment=1,
         preview = false)
     
     zmb_fit = deepcopy(zmb_skeleton)
-    parameters  = [getindex.(Ref(cmt.parameters), [:s_infant,:s_vax]) for cmt in zmb_fit]
+    parameters  = [getindex.(Ref(cmt.parameters), estkeys) for cmt in zmb_fit]
     zmb_opt = estimateparameters!(zmb_fit,pyramid,parameters)
 
     zmb_plot = plot(dataplots, zmb_fit|>collect; label = ["all contacts" "physical only" "at home" "physical & home"],legend=(0.1,0.96),ylim=(0,0.4), color = [1 1 2 2],linestyle = [:solid :dash],
     title = "empirical matrix (Zimbabwe)")
 
     drc_fit = deepcopy(drc_skeleton)
-    parameters  = [getindex.(Ref(cmt.parameters), [:s_infant,:s_vax]) for cmt in drc_fit]
+    parameters  = [getindex.(Ref(cmt.parameters), estkeys) for cmt in drc_fit]
     drc_opt=estimateparameters!(drc_fit,pyramid, parameters)
 
     drc_plot=plot(dataplots, drc_fit|>collect;label = ["all contacts" "at home"],legend=(0.1,0.96),ylim=(0,0.4),color = [:royalblue :firebrick],
@@ -77,13 +78,16 @@ function output_fit(
         zmb_skeleton::AbstractArray,
         drc_skeleton::AbstractArray,
         dataplots,
+        estkeys = [:s_infant,:s_vax],
         ascertainment=1,
-        preview = false
+        preview = false,
+        sync=true
         )
+    if sync==true sync = [estkeys;:s_partvax] end
     zmb_copy = deepcopy.(zmb_skeleton)
     zmb_fit = vectoriseNamedTuple(zmb_copy)
-    parameters  = [getindex.(Ref(cmt_vec[1].parameters), [:s_infant,:s_vax]) for cmt_vec in zmb_fit]
-    zmb_opt = estimateparameters!(zmb_fit,pyramids,parameters,sync = [:s_infant,:s_vax,:s_partvax])
+    parameters  = [getindex.(Ref(cmt_vec[1].parameters), estkeys) for cmt_vec in zmb_fit]
+    zmb_opt = estimateparameters!(zmb_fit,pyramids,parameters,sync = sync)
 
     zmb_plot = plot.(dataplots, zmb_copy.|>collect;label = ["all contacts" "physical only" "at home" "physical & home"],legend=(0.1,0.96),ylim=(0,0.4), color = [1 1 2 2],linestyle = [:solid :dash],
     title = "empirical matrix (Zimbabwe)")
@@ -91,8 +95,8 @@ function output_fit(
 
     drc_copy = deepcopy.(drc_skeleton)
     drc_fit = vectoriseNamedTuple(drc_copy)
-    parameters  = [getindex.(Ref(cmt_vec[1].parameters), [:s_infant,:s_vax]) for cmt_vec in drc_fit]
-    drc_opt=estimateparameters!(drc_fit,pyramids, parameters,sync=[:s_infant,:s_vax,:s_partvax])
+    parameters  = [getindex.(Ref(cmt_vec[1].parameters), estkeys) for cmt_vec in drc_fit]
+    drc_opt=estimateparameters!(drc_fit,pyramids, parameters,sync=sync)
 
     drc_plot=plot.(dataplots, drc_copy.|>collect; label = ["all contacts" "at home"],legend=(0.1,0.96),ylim=(0,0.4),color = [:royalblue :firebrick],
 title = "synthetic matrix (DRC)")

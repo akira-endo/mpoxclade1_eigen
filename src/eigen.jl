@@ -84,17 +84,27 @@ end
 makeagegrouplabel(p::Pyramid)=makeagegrouplabel(p.ageinterval)
 
 # contact matrices
-function contactmatrix(surveyname::Symbol, ageinterval::AbstractVector, countries = nothing, filter = nothing, sus_func = x->one(0.))
-    cmt = socialmixr_eig(surveyname, ageinterval, countries,filter)
-    ContactMatrix([cmt.matrix], ageinterval, convert(Vector{Vector{Union{Scalar,Float64}}},[map.(sus_func,ageinterval)]),PDict(),[zero(cmt.matrix)],Dict{Symbol,Any}(:issynthetic=>false))
+function partvax_cov(countrycode, year, cessation = 1980)
+    unvax_age = year-cessation
+    vaxageint = [0,unvax_age÷10*10,unvax_age+1,(unvax_age÷10+1)*10]
+    popsize(vaxageint,countrycode=string(countrycode),year=year)[2:3]|>Base.Fix2(normalize,1)|>last
 end
-function contactmatrix(syntheticdata::AbstractDict, ageinterval::AbstractVector, countrycode_s, sus_func = x->one(0.);year=2024)
-    cmt = synthetic_eig(syntheticdata, ageinterval, countrycode_s;year=year)
-    ContactMatrix([cmt.matrix], ageinterval, convert(Vector{Vector{Union{Scalar,Float64}}},[map.(sus_func,ageinterval)]),PDict(),[zero(cmt.matrix)],Dict{Symbol,Any}(:issynthetic=>true)) # temporary fix of (0:15).*5 in place of ageintervel
+function contactmatrix(surveyname::Symbol, ageinterval::AbstractVector, countries = nothing, filter = nothing, sus_func = x->one(0.);year, refyear = 2013, refcountrycode="ZWE")
+    partcov=partvax_cov(countries, year)
+    demogchange = popsize(ageinterval, countrycode=countries, year = year)./popsize(ageinterval,countrycode=refcountrycode,year=refyear)
+    cmt = socialmixr_eig(surveyname, ageinterval, get_country(refcountrycode).name,filter;susceptibility=demogchange)
+    ContactMatrix([cmt.matrix], ageinterval, convert(Vector{Vector{Union{Scalar,Float64}}},[map.(sus_func,ageinterval)]),PDict(),[zero(cmt.matrix)],Dict{Symbol,Any}(:issynthetic=>false,:partcov=>partcov))
+end
+function contactmatrix(syntheticdata::AbstractDict, ageinterval::AbstractVector, countrycode_s, sus_func = x->one(0.);year=2024,refyear = 2020)
+    partcov=partvax_cov(countrycode_s, year)
+    demogchange = popsize(ageinterval,countrycode=string(countrycode_s),year=year)./popsize(ageinterval,countrycode=string(countrycode_s),year=refyear)
+    cmt = synthetic_eig(syntheticdata, ageinterval, countrycode_s;year=year,susceptibility=demogchange)
+    ContactMatrix([cmt.matrix], ageinterval, convert(Vector{Vector{Union{Scalar,Float64}}},[map.(sus_func,ageinterval)]),PDict(),[zero(cmt.matrix)],Dict{Symbol,Any}(:issynthetic=>true,:partcov=>partcov))
 end
 
-contactmatrix(surveyname::Symbol, p::Pyramid, countries = nothing, filter = nothing, sus_func = x->one(0.))= contactmatrix(surveyname, p.ageinterval, countries, filter, sus_func)
-contactmatrix(syntheticdata::AbstractDict, p::Pyramid, countrycode_s, sus_func = x->one(0.);year=2024)= contactmatrix(syntheticdata, p.ageinterval, countrycode_s, sus_func;year=year)
+contactmatrix(surveyname::Symbol, p::Pyramid, countries = nothing, filter = nothing, sus_func = x->one(0.);year,refyear = 2013, refcountrycode="ZWE")= contactmatrix(surveyname, p.ageinterval, countries, filter, sus_func;year=year,refyear = refyear, refcountrycode=refcountrycode)
+
+contactmatrix(syntheticdata::AbstractDict, p::Pyramid, countrycode_s, sus_func = x->one(0.);year=2024,refyear=2020)= contactmatrix(syntheticdata, p.ageinterval, countrycode_s, sus_func;year=year,refyear=refyear)
 
 function Base.:+(c1::ContactMatrix, m::AbstractArray)
     if iszero(c1.addmat) ContactMatrix(c1.matrix,c1.ageinterval,c1.susceptibility,c1.parameters,m,c1.misc)
@@ -119,10 +129,16 @@ function Base.hcat(cm1::ContactMatrix, cm2::ContactMatrix)
 end
 
 # contact matrix data
-popsize(ageinterval; countryname=countryname, year = year) = @suppress(rcopy(smr.pop_age(smr.wpp_age(countryname, 2024),ageinterval.|>Int)).population|>Base.Fix2(normalize,1))
+wpp2024=CSV.read("../data/wpp2024/wpp2024_selected.csv",DataFrame)[:,[:Location,:Iso3,:AgeStart,:Time,:Value]]
+rename!(wpp2024,:Value=>:population,:AgeStart=>Symbol("lower.age.limit"))
+function popsize(ageinterval; countrycode, year,data=wpp2024) 
+fildata = filter(:Time=>==(year),filter(:Iso3=>==(countrycode),data))
+rcopy(smr.pop_age(fildata, ageinterval.|>Int)).population|>Base.Fix2(normalize,1)
+end
 
-function socialmixr_eig(surveyname, ageinterval, countries = nothing, filter=nothing, susceptibility = 1, addmat = zeros(fill(size(ageinterval)[1],2)...))
-    smixr = @suppress( rcopy(r.suppressWarnings(smr.contact_matrix(surveyname, countries = countries, var"age.limits" = ageinterval, filter = filter,symmetric=true,var"return.demography"=true,var"estimated.contact.age"="mean"))) )
+
+function socialmixr_eig(surveyname, ageinterval, countries = nothing, filter=nothing; susceptibility = 1, addmat = zeros(fill(size(ageinterval)[1],2)...))
+    smixr = @suppress( rcopy(r.suppressWarnings(smr.contact_matrix(surveyname, countries = countries, var"age.limits" = ageinterval, filter = filter,symmetric=true,var"return.demography"=true,var"estimated.contact.age"="sample"))) )
     cmt = smixr[:matrix]
     if countries=="Zimbabwe" cmt./=2 end # as Zimbabwe contact matrix contain two days of contacts per participant
     cmt .+= addmat
@@ -133,16 +149,16 @@ function socialmixr_eig(surveyname, ageinterval, countries = nothing, filter=not
 end
 
 
-function synthetic_eig(contactdata, ageinterval, countrycodes::AbstractArray, susceptibility = 1;year=2024)
+function synthetic_eig(contactdata, ageinterval, countrycodes::AbstractArray;susceptibility = 1,year=2024)
     out = synthetic_eig.(Ref(contactdata),Ref(ageinterval),countrycodes,Ref(susceptibility);year=year)
     (countrycode = getfield.(out,:countrycode), eigval = getfield.(out,:eigval), eigvec = getfield.(out,:eigvec), matrix = getfield.(out,:matrix))
 end
-function synthetic_eig(contactdata, ageinterval, countrycode::Symbol, susceptibility = 1;year=2024)
+function synthetic_eig(contactdata, ageinterval, countrycode::Symbol; susceptibility = 1,year=2024)
     cmt = contactdata[countrycode]
     # merge contact matrix using {hhh4contacts}
     @rput cmt
     R"library(hhh4contacts); rownames(cmt)<-0:15*5"
-    pop = popsize((0:15).*5,countryname=get_country(string(countrycode)).name,year=year)
+    pop = popsize((0:15).*5,countrycode=string(countrycode),year=year)
     @rput pop
     groupmap = (;(Symbol.([@sprintf("%02d",a) for a in ageinterval]).=>[string.(x) for x in collect.(range.(ageinterval,[ageinterval[2:end];76].-1,step=5))])...)
     @rput groupmap
@@ -152,12 +168,13 @@ function synthetic_eig(contactdata, ageinterval, countrycode::Symbol, susceptibi
     ev = abs.(normalize(eigvecs(cmt')[:,end],1))
     (countrycode=countrycode,eigval = ρ, eigvec = ev, matrix = cmt)
 end
-function synthetic_eig(contactdata, ageinterval, countrycode::Nothing, susceptibility = 1;year=2024)
+function synthetic_eig(contactdata, ageinterval, countrycode::Nothing; susceptibility = 1,year=2024)
     synthetic_eig(contactdata, ageinterval, keys(contactdata)|>collect, susceptibility;year=year)
 end
 
 # next generation matrix
-function ngm(cm::ContactMatrix, R0 = nothing) 
+function ngm(cm::ContactMatrix, R0 = nothing)
+    cm.parameters[:s_partvax] .= 1-(1-cm.parameters[:s_vax][])*cm.misc[:partcov] # set partvax
     cmt = broadcast.(*,cm.susceptibility', broadcast.(+,cm.matrix, cm.addmat))
     if !isnothing(R0) cmt./=dominanteigval(cm) end
     cmt|>transpose
@@ -200,13 +217,11 @@ end
 
 function (nll::NLL)(x)
         for (parameter, el) in zip(nll.mutateparameters,x) parameter.=el end
-        nll.cm.parameters[:s_partvax] .= (1+nll.cm.parameters[:s_vax][])/2 # effectiveness among partvax to be half s_vax
         modifier_ll = nll.modifier!(nll.p, nll.cm)
         -likelihood(nll.p,nll.cm)-modifier_ll
 end
 function (nlls::NLLs)(x)
         for (parameter, el) in zip(nlls.mutateparameters,x) parameter.=el end
-        first(nlls.cm).parameters[:s_partvax] .= (1+first(nlls.cm).parameters[:s_vax][])/2 # effectiveness among partvax to be half s_vax
         modifier_ll = mean(nlls.modifier!.(nlls.p, nlls.cm))
         if !(isempty(nlls.sync)) for i in 1:length(nlls.cm)-1 overwriteparameters!(nlls.cm[i+1], nlls.cm[i],nlls.sync) end end # assume cm is in growing order in terms of # parameters
         -sum(likelihood.(nlls.p,nlls.cm))-modifier_ll
@@ -214,7 +229,7 @@ end
 
 function optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMatrix; sync=false,modifier!::Function = (x...)->0.) # sync is only placeholder in this method
     nll=NLL(p,cm,mutateparameters,modifier!)
-    @time opt = optimize(nll, zeros(length(mutateparameters)).+1e-6,fill(500.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()),Optim.Options(g_tol=1e-5, x_tol=1e-6))
+    @time opt = optimize(nll, zeros(length(mutateparameters)).+1e-6,fill(500.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()),Optim.Options(g_tol=1e-5, x_tol=1e-8))
     hess = FiniteDiff.finite_difference_hessian(nll,opt.minimizer)
     nll(opt.minimizer)
     (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess ,result=opt)
@@ -222,7 +237,7 @@ end
 
 function optimise!(mutateparameters::Vector{Scalar}, p::AbstractArray{<:Pyramid}, cm::AbstractArray{<:ContactMatrix}; sync = Symbol[], modifier!::Function = (x...)->0.)
     nlls=NLLs(p,cm,mutateparameters,modifier!,sync)
-    @time opt = optimize(nlls, zeros(length(mutateparameters)).+1e-6,fill(100.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()), Optim.Options(g_tol=1e-5, x_tol=1e-6, time_limit=1800.))
+    @time opt = optimize(nlls, zeros(length(mutateparameters)).+1e-6,fill(100.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()), Optim.Options(g_tol=1e-5, x_tol=1e-8, time_limit=1800.))
     hess = FiniteDiff.finite_difference_hessian(nlls,opt.minimizer)
     nlls(opt.minimizer)#for (parameter, el) in zip(mutateparameters,opt.minimizer) parameter.=el end
     (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess,result=opt)
