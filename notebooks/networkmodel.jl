@@ -66,8 +66,6 @@ plot!([1;(1 .-min.(1,cumsum(degdist./sum(degdist))))[1:end-1]],xscale=:log10,ysc
 
 assortativity.(binets1[4])|>Base.Fix2(quantile,(0.,0.025,0.5,0.975,1))
 
-@time R0 = adjacency_spectrum.(gs).|>maximum
-
 # compute adjacency spectrum (~1h)
 BLAS.set_num_threads(1)
 adjR0s1 = zeros(length(gh))
@@ -97,8 +95,8 @@ approxR0s1 = approxR0.(binets1[1:3]...)
 approxR0s2 = approxR0.(binets2[1:3]...)
 
 # save files
- CSV.write("../data/intermediate/networkmodel_spectrum1.csv",DataFrame((adj = adjR0s1, ngm = approxR0s1, com = cR0s1)))
- CSV.write("../data/intermediate/networkmodel_spectrum2.csv",DataFrame((adj = adjR0s2, ngm = approxR0s2, com = cR0s2)))
+ #CSV.write("../data/intermediate/networkmodel_spectrum1.csv",DataFrame((adj = adjR0s1, ngm = approxR0s1, com = cR0s1)))
+ #CSV.write("../data/intermediate/networkmodel_spectrum2.csv",DataFrame((adj = adjR0s2, ngm = approxR0s2, com = cR0s2)))
 
 # read files
 ns1 = CSV.read("../data/intermediate/networkmodel_spectrum1.csv", DataFrame)
@@ -116,22 +114,3 @@ plot!(xlabel="dominant eigenvalue of adjacency matrix",ylabel="dominant eigenval
 
 @show quantile(1 .-ns1[:,3]./ns1[:,1],(0.025,0.5,0.975))
 @show quantile(1 .-ns2[:,3]./ns2[:,1],(0.025,0.5,0.975));
-
-@time am=adjacency_matrix(gs[1])
-
-@time [am*normalize((am^n*fill(1e-4,10000)),1)|>sum for n in 1:10]|>plot
-
-
-
-highriskind=((adjacency_matrix(gs[1]).+diagm(fill(1,10000)))*in.(1:10000,Ref(5001:5500)).!=0)
-
-g1=deepcopy(gs[1])
-rem_vertices!(g1,(1:10000)[.!highriskind])|>sort
-
-degree(g1)|>histogram
-
-@time am=adjacency_matrix(g1)
-
-@time [am*normalize((am^n*fill(1e-4,1123)),1)|>sum for n in 1:20]|>plot
-
-

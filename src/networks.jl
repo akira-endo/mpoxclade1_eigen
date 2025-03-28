@@ -30,7 +30,7 @@ end
 function approxR0(gh, gl, gc, sizes_high = (500, 100))
     if !(nv(gh)==nv(gl)==nv(gc)) throw("sizes do not match") end
     size = nv(gh)÷2
-    C = (degree(union(gl,gc))|>mean)/2
+    C = (degree(union(gh,union(gl,gc)))|>mean)/2
     gs = union(gh,gl)
     d_M = degree(gs)[1:sizes_high[1]]
     nd_M = mean(d_M,StatsBase.weights(d_M)) # neighbour degree for male
