@@ -92,12 +92,16 @@ end
 function contactmatrix(surveyname::Symbol, ageinterval::AbstractVector, countries = nothing, filter = nothing, sus_func = x->one(0.);year, refyear = 2013, refcountrycode="ZWE")
     partcov=partvax_cov(countries, year)
     demogchange = popsize(ageinterval, countrycode=countries, year = year)./popsize(ageinterval,countrycode=refcountrycode,year=refyear)
+    if refcountrycode=="MAN" refcountrycode = "ZWE" end
     cmt = socialmixr_eig(surveyname, ageinterval, get_country(refcountrycode).name,filter;susceptibility=demogchange)
     ContactMatrix([cmt.matrix], ageinterval, convert(Vector{Vector{Union{Scalar,Float64}}},[map.(sus_func,ageinterval)]),PDict(),[zero(cmt.matrix)],Dict{Symbol,Any}(:issynthetic=>false,:partcov=>partcov))
 end
 function contactmatrix(syntheticdata::AbstractDict, ageinterval::AbstractVector, countrycode_s, sus_func = x->one(0.);year=2024,refyear = 2020)
     partcov=partvax_cov(countrycode_s, year)
-    demogchange = popsize(ageinterval,countrycode=string(countrycode_s),year=year)./popsize(ageinterval,countrycode=string(countrycode_s),year=refyear)
+    refcountry = countrycode_s
+    if countrycode_s==:BDIC refcountry = :BDI end
+    demogchange = popsize(ageinterval,countrycode=string(countrycode_s),year=year)./popsize(ageinterval,countrycode=string(refcountry),year=refyear)
+    if countrycode_s==:BDIC countrycode_s = :BDI end
     cmt = synthetic_eig(syntheticdata, ageinterval, countrycode_s;year=year,susceptibility=demogchange)
     ContactMatrix([cmt.matrix], ageinterval, convert(Vector{Vector{Union{Scalar,Float64}}},[map.(sus_func,ageinterval)]),PDict(),[zero(cmt.matrix)],Dict{Symbol,Any}(:issynthetic=>true,:partcov=>partcov))
 end
@@ -129,7 +133,7 @@ function Base.hcat(cm1::ContactMatrix, cm2::ContactMatrix)
 end
 
 # contact matrix data
-wpp2024=CSV.read("../data/wpp2024/wpp2024_selected.csv",DataFrame)[:,[:Location,:Iso3,:AgeStart,:Time,:Value]]
+wpp2024=CSV.read("../data/wpp2024/populationdata.csv",DataFrame)[:,[:Location,:Iso3,:AgeStart,:Time,:Value]]
 rename!(wpp2024,:Value=>:population,:AgeStart=>Symbol("lower.age.limit"))
 function popsize(ageinterval; countrycode, year,data=wpp2024) 
 fildata = filter(:Time=>==(year),filter(:Iso3=>==(countrycode),data))
