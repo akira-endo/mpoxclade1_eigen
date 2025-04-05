@@ -260,7 +260,7 @@ plot(heats[[1,2,5]]...,ticks=(1:8,makeagegrouplabel([0:5:20;30:10:50])),size=(80
     bottom_margin = 2Plots.PlotMeasures.mm) |>savefigname("../figs/fig2/raw/heatmaps.svg", save = false)
 # +
 # vaccine impact heatmaps
-popvaxrange, fswvaxrange = 0:0.25:50, 0:0.5:100
+popvaxrange, fswvaxrange = 0:0.5:100, 0:0.5:100
 kivu2024_project=deepcopy(kivu2024_fit.zmb_fit)
 kivuRmap=vaccineRmap.(kivu2024_project|>collect,eig_endemic.eigval0,ve=0.86,poprange = popvaxrange./100, fswrange = fswvaxrange./100)
 burundi2024_project=deepcopy(burundi2024_fit.zmb_fit)
@@ -273,9 +273,9 @@ hm_kivu = heatmap(fswvaxrange,popvaxrange,mean(kivuRmap.|>first,Ib_weights),clim
 contour!(hm_kivu, fswvaxrange,popvaxrange,mean(kivuRmap.|>first,Ib_weights),contour_labels=true, levels = 0.5:0.1:1.5,color=:black)
 hm_burundi = heatmap(fswvaxrange,popvaxrange,mean(burundiRmap.|>first,Ib_weights),clim=(0.5,1.5), xticks = (0:20:100),color=cgrad(:coolwarm, [0.0, 0.5, 0.501, 1],categorical=false))
 contour!(hm_burundi,fswvaxrange,popvaxrange,mean(burundiRmap.|>first,Ib_weights),contour_labels=true, levels = 0.5:0.05:1.5,color=:black)
-hm2_kivu = heatmap(fswvaxrange,popvaxrange,mean(100 .*(kivuRmap.|>last),Ib_weights),clim=(0.0,50), xticks = (0:20:100), color=cgrad(:Blues_3,rev=true))
+hm2_kivu = heatmap(fswvaxrange,popvaxrange,mean(100 .*(kivuRmap.|>last),Ib_weights),clim=(0.0,60), xticks = (0:20:100), color=cgrad(:Blues_3,rev=true))
 contour!(hm2_kivu, fswvaxrange,popvaxrange,mean(100 .*(kivuRmap.|>last),Ib_weights),contour_labels=true, levels = 0.0:5:100,color=:black)
-hm2_burundi = heatmap(fswvaxrange,popvaxrange,mean(100 .*(burundiRmap.|>last),Ib_weights),clim=(0.0,50), xticks = (0:20:100),color=cgrad(:Blues_3,rev=true))
+hm2_burundi = heatmap(fswvaxrange,popvaxrange,mean(100 .*(burundiRmap.|>last),Ib_weights),clim=(0.0,60), xticks = (0:20:100),color=cgrad(:Blues_3,rev=true))
 contour!(hm2_burundi,fswvaxrange,popvaxrange,mean(100 .*(burundiRmap.|>last),Ib_weights),contour_labels=true, levels = 0.0:5:100,color=:black);
 
 plot(hm_kivu,title = "reproduction number" ,xlabel = "vaccine uptake % (FSW)", ylabel = "vaccine uptake % (adult aged 20–39)",size=(400,350)) |>savefigname("../figs/fig2/raw/kivu_vax.svg",save=false)
