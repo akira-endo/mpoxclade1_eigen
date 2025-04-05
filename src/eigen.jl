@@ -1,6 +1,8 @@
 ENV["TMPDIR"] = "/tmp"
 using LinearAlgebra
 using Countries
+using CSV
+using DataFrames
 using Distributions
 using Plots
 using RCall
@@ -178,7 +180,7 @@ end
 
 # next generation matrix
 function ngm(cm::ContactMatrix, R0 = nothing)
-    cm.parameters[:s_partvax] .= 1-(1-cm.parameters[:s_vax][])*cm.misc[:partcov] # set partvax
+    if haskey(cm.parameters,:s_partvax) cm.parameters[:s_partvax] .= 1-(1-cm.parameters[:s_vax][])*cm.misc[:partcov] end # set partvax
     cmt = broadcast.(*,cm.susceptibility', broadcast.(+,cm.matrix, cm.addmat))
     if !isnothing(R0) cmt./=dominanteigval(cm) end
     cmt|>transpose
