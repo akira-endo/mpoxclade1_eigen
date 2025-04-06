@@ -51,12 +51,12 @@ immunity2015(x,cm) = x≥40 ? cm.parameters[:s_vax] : (x≥30 ? cm.parameters[:s
 immunity2024(x,cm) = x≥50 ? cm.parameters[:s_vax] : (x≥40 ? cm.parameters[:s_partvax] : (x==0 ? cm.parameters[:s_infant] : cm.parameters[:s_baseline]))
 
 filters = [nothing, (phys_contact=1,),(cnt_home=1,),(phys_contact=1,cnt_home=1)]
-zmb2015_original = (;zip([:all, :phys, :home, :physhome] ,contactmatrix.(:zimbabwe_survey, Ref(tshuapa_h2hag), "COD", filters,year=2013))...)
+zmb2015_original = (;zip([:all, :phys, :home, :physhome] ,contactmatrix.(:zimbabwe_survey, Ref(tshuapa_h2hag), "COD", filters,year=2013,refyear=2012,refcountrycode="MAN"))...)
 drc2015_original = (;zip([:all, :home] ,contactmatrix.([contact_all, contact_home], (tshuapa_h2hag), :COD, year=2013))...)
-zmb2024_original = (;zip([:all, :phys, :home, :physhome] ,contactmatrix.(:zimbabwe_survey, Ref(drc_endemic_ag), "COD", filters,year=2024))...)
+zmb2024_original = (;zip([:all, :phys, :home, :physhome] ,contactmatrix.(:zimbabwe_survey, Ref(drc_endemic_ag), "COD", filters,year=2024,refyear=2012,refcountrycode="MAN"))...)
 drc2024_original = (;zip([:all, :home] ,contactmatrix.([contact_all, contact_home],Ref(drc_endemic_ag), :COD, year=2024))...)
-bdi2024_original = (;zip([:all, :phys, :home, :physhome] ,contactmatrix.(:zimbabwe_survey, Ref(drc_endemic_ag), "BDI", filters,year=2024))...)
-bdi_s2024_original = (;zip([:all, :home] ,contactmatrix.([contact_all, contact_home],Ref(drc_endemic_ag), :BDI, year=2024))...)
+bdi2024_original = (;zip([:all, :phys, :home, :physhome] ,contactmatrix.(:zimbabwe_survey, Ref(drc_endemic_ag), "BDIC", filters,year=2024,refyear=2012,refcountrycode="MAN"))...)
+bdi_s2024_original = (;zip([:all, :home] ,contactmatrix.([contact_all, contact_home],Ref(drc_endemic_ag), :BDIC, year=2024))...)
 
 
 zmb2015 = parameterise(zmb2015_original, immunity2015)
