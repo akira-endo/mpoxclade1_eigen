@@ -1,3 +1,6 @@
+Scalar=Array{Float64,0}
+using Suppressor
+
 function groupsum(v::AbstractVector, breaks::AbstractVector)
     ids = range.(breaks[begin:end-1],breaks[begin+1:end].-1)
     sum.(getindex.(Ref(v),[ids;[breaks[end]:lastindex(v)]]))
@@ -28,3 +31,9 @@ end
 collapseblockmat(bm)= collapseblockmat(reduce(vcat, (reduce(hcat, row) for row in eachrow(bm))))
 collapseblockmat(bm::AbstractArray{<:Scalar})= getindex.(bm)
 collapseblockmat(bm::AbstractArray{<:Number})= bm
+
+savefigname(filename::AbstractString; save = true) = plt->
+begin 
+    @suppress if save savefig(plt,filename)|>display end
+    @suppress display(plt)
+end 

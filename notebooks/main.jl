@@ -7,11 +7,11 @@
 #       extension: .jl
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.16.4
+#       jupytext_version: 1.16.6
 #   kernelspec:
-#     display_name: Julia 1.9.3
+#     display_name: Julia 14 Threads 1.9.3
 #     language: julia
-#     name: julia-1.9
+#     name: julia-14-threads-1.9
 # ---
 
 using Pkg
@@ -75,8 +75,8 @@ kivuplot = plot(plot(drc_kivu),ylim=(0,0.5),xtickfontsize=9);
 # -
 
 
-zmb2024_sexual = addsexualcontact!(deepcopy(zmb2024),[15;20:10:40]; modifier! = propmix!, countryname = "DRC",year = 2024);
-drc2024_sexual = addsexualcontact!(deepcopy(drc2024),[15;20:10:40]; modifier! = propmix!, countryname = "DRC",year = 2024);
+zmb2024_sexual = addsexualcontact!(deepcopy(zmb2024),[15;20:10:40]; modifier! = propmix!, countrycode = "COD",year = 2024);
+drc2024_sexual = addsexualcontact!(deepcopy(drc2024),[15;20:10:40]; modifier! = propmix!, countrycode = "COD",year = 2024);
 
 kamituga2024_fit = output_sexual_fit(
     drc_kamituga,
@@ -109,17 +109,21 @@ otherhz2024_fit = output_sexual_fit(
     );
 
 # +
-zmb2024_sexual_b = addsexualcontact!(deepcopy(zmb2024),[15;20:10:40]; modifier! = propmix!, countryname = "Burundi",year = 2024);
-drc2024_sexual_b = addsexualcontact!(deepcopy(drc2024),[15;20:10:40]; modifier! = propmix!, countryname = "Burundi",year = 2024);
+zmb2024_sexual_b = addsexualcontact!(deepcopy(bdi2024),[15;20:10:40]; modifier! = propmix!, countrycode = "BDIC",year = 2024);
+drc2024_sexual_b = addsexualcontact!(deepcopy(bdi_s2024),[15;20:10:40]; modifier! = propmix!, countrycode = "BDIC",year = 2024);
+
+burundi = aggregateagegroups(readJSON(:burundi_Oct2024),[0:5:15;20:10:50])
+burundi0 = aggregateagegroups(readJSON(:burundi_midSep2024),[0:5:15;20:10:50])
+burundi.cases .-= broadcast.(min,burundi0.cases,burundi.cases)
 
 zmb_ref = deepcopy(last.(zmb2015_24_fit|>collect))
 drc_ref = deepcopy(last.(drc2015_24_fit|>collect))
 
 for cmt in zmb_ref
-    cmt.parameters[:s_vax].=1-(1-cmt.parameters[:s_vax][])*0.7
+    cmt.parameters[:s_vax].=1-(1-cmt.parameters[:s_vax][])*1.0
 end
 for cmt in drc_ref
-    cmt.parameters[:s_vax].=1-(1-cmt.parameters[:s_vax][])*0.7
+    cmt.parameters[:s_vax].=1-(1-cmt.parameters[:s_vax][])*1.0
 end
 
 burundi2024_fit = output_sexual_fit(
@@ -130,7 +134,7 @@ burundi2024_fit = output_sexual_fit(
     drc_ref=drc_ref,
     dataplots = collapseplot(burundi),
     estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w]
-);
+    );
 # -
 kamituga2024_skeleton=deepcopy(kamituga2024_fit)
 for cm in kamituga2024_skeleton.zmb_fit for el in cm.addmat el.*=0. end end
@@ -256,7 +260,7 @@ plot(heats[[1,2,5]]...,ticks=(1:8,makeagegrouplabel([0:5:20;30:10:50])),size=(80
     bottom_margin = 2Plots.PlotMeasures.mm) |>savefigname("../figs/fig2/raw/heatmaps.svg", save = false)
 # +
 # vaccine impact heatmaps
-popvaxrange, fswvaxrange = 0:0.25:50, 0:0.5:100
+popvaxrange, fswvaxrange = 0:0.5:100, 0:0.5:100
 kivu2024_project=deepcopy(kivu2024_fit.zmb_fit)
 kivuRmap=vaccineRmap.(kivu2024_project|>collect,eig_endemic.eigval0,ve=0.86,poprange = popvaxrange./100, fswrange = fswvaxrange./100)
 burundi2024_project=deepcopy(burundi2024_fit.zmb_fit)
@@ -269,9 +273,9 @@ hm_kivu = heatmap(fswvaxrange,popvaxrange,mean(kivuRmap.|>first,Ib_weights),clim
 contour!(hm_kivu, fswvaxrange,popvaxrange,mean(kivuRmap.|>first,Ib_weights),contour_labels=true, levels = 0.5:0.1:1.5,color=:black)
 hm_burundi = heatmap(fswvaxrange,popvaxrange,mean(burundiRmap.|>first,Ib_weights),clim=(0.5,1.5), xticks = (0:20:100),color=cgrad(:coolwarm, [0.0, 0.5, 0.501, 1],categorical=false))
 contour!(hm_burundi,fswvaxrange,popvaxrange,mean(burundiRmap.|>first,Ib_weights),contour_labels=true, levels = 0.5:0.05:1.5,color=:black)
-hm2_kivu = heatmap(fswvaxrange,popvaxrange,mean(100 .*(kivuRmap.|>last),Ib_weights),clim=(0.0,50), xticks = (0:20:100), color=cgrad(:Blues_3,rev=true))
+hm2_kivu = heatmap(fswvaxrange,popvaxrange,mean(100 .*(kivuRmap.|>last),Ib_weights),clim=(0.0,60), xticks = (0:20:100), color=cgrad(:Blues_3,rev=true))
 contour!(hm2_kivu, fswvaxrange,popvaxrange,mean(100 .*(kivuRmap.|>last),Ib_weights),contour_labels=true, levels = 0.0:5:100,color=:black)
-hm2_burundi = heatmap(fswvaxrange,popvaxrange,mean(100 .*(burundiRmap.|>last),Ib_weights),clim=(0.0,50), xticks = (0:20:100),color=cgrad(:Blues_3,rev=true))
+hm2_burundi = heatmap(fswvaxrange,popvaxrange,mean(100 .*(burundiRmap.|>last),Ib_weights),clim=(0.0,60), xticks = (0:20:100),color=cgrad(:Blues_3,rev=true))
 contour!(hm2_burundi,fswvaxrange,popvaxrange,mean(100 .*(burundiRmap.|>last),Ib_weights),contour_labels=true, levels = 0.0:5:100,color=:black);
 
 plot(hm_kivu,title = "reproduction number" ,xlabel = "vaccine uptake % (FSW)", ylabel = "vaccine uptake % (adult aged 20–39)",size=(400,350)) |>savefigname("../figs/fig2/raw/kivu_vax.svg",save=false)
@@ -319,5 +323,8 @@ initcases=Int.(in.((1:32), Ref([4,20])))
 casegens = normalize.(reduce.(vcat,splitsum.(ngm_kivu2024.^[(1:4)' 100].*Ref(initcases),4,Ref([1,3]))),1)
 plot([plot(casegens[x,:], xticks=(1:16,repeat(makeagegrouplabel(drc_kivu),2)),xrotation=45,ylim=(0,0.4),linealpha=Float64.((1:16).!=8),xlabel="age (male, female)",ylabel="proportion",label=["gen ".*string.((1:4)') "eigenvector"],tickfontsize = 8,labelfontsize=9, bottom_margin=5Plots.PlotMeasures.mm,
     color = Gray.((range(0,0.9,length=5))')) for x in 1:4]...,size = (600,400),legendfontsize=6, legend=[(0.8,1) :none :none :none], title = ["all contacts" "physical contacts" "all contacts at home" "physical contacts at home"])
+
+plot([mean([((est.CI[x][1:8].-1).^2) for x in 1:4],Ib_weights) for est in [est_kamituga,est_kivu,est_otherhz,est_burundi]],linealpha=[ones(3);0])|>display
+[mean([est.CI[x][9:10] for x in 1:4]./eig_endemic.eigval,Ib_weights) for est in [est_kamituga,est_kivu,est_otherhz,est_burundi]]
 
 

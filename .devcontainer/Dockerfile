@@ -45,8 +45,15 @@ RUN printf ' { \
 
 
 # R packages
+RUN sudo apt update && \
+	sudo apt install cmake -y # CMake required by factoextra
 RUN conda install -c conda-forge r-remotes=2.5.0
-RUN R -e 'library(remotes); remotes::install_version("socialmixr", version = "0.3.2",repos = "https://cloud.r-project.org/"); remotes::install_version("hhh4contacts", version="0.13.3", repos= "https://cloud.r-project.org/")'
+RUN R -e 'library(remotes);　\
+	remotes::install_version("socialmixr", version = "0.3.2",repos = "https://cloud.r-project.org/"); \
+	remotes::install_version("hhh4contacts", version="0.13.3", repos= "https://cloud.r-project.org/"); \
+	remotes::install_version("factoextra", version="1.0.7", repos= "https://cloud.r-project.org/"); \
+	remotes::install_version("countrycode", version="1.6.0", repos= "https://cloud.r-project.org/"); \
+	'
 
 # Fix the issue of old libstdc++
 RUN rm -rf /opt/julia-1.9.3/lib/julia/libstdc++.so.6

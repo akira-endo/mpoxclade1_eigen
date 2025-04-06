@@ -9,8 +9,11 @@ services:
 
     ports:
       - "8800:8888" # http://localhost:8800/lab to launch Jupyter Lab
-
+       
     volumes:
       - .:/home/jovyan/work
 
-    command: start.sh jupyter lab
+    command: >
+        bash -c 'julia -e "using Pkg;Pkg.activate(\"./work\");Pkg.instantiate()"
+        && julia -e "using IJulia;IJulia.installkernel(\"Julia Multithreads\",env=Dict(\"JULIA_NUM_THREADS\" => \"14\",))" &&
+        start.sh jupyter lab'
