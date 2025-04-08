@@ -85,7 +85,7 @@ function output_fit(
         estkeys = [:s_infant,:s_vax],
         ascertainment=1,
         preview = false,
-        bayesian=false
+        bayesian=false,
         sync=true
         )
     if sync==true sync = [estkeys;:s_partvax] end
@@ -234,24 +234,24 @@ function output_validate(
     zmb_fit = deepcopy(zmb_skeleton)
     overwriteparameters!.(zmb_fit|>collect, zmb_ref|>collect)
     @show likelihood.(pyramid,zmb_fit|>collect)
-    for cmt in zmb_fit
+    """for cmt in zmb_fit
         if :opt in keys(cmt.misc)
             opt = cmt.misc[:opt]
             cmt.misc[:opt]=(minimizer = opt.minimizer, minimum = -likelihood(pyramid,cmt),  hessian = opt.hessian,result=opt.result)
         end
-    end
+    end"""
     zmb_plot = plot(dataplots, zmb_fit|>collect; label = ["all contacts" "physical only" "at home" "physical & home"],legend=(0.1,0.96),ylim=(0,0.4), color = [1 1 2 2],linestyle = [:solid :dash],
     title = "empirical matrix (Zimbabwe)")
     
     drc_fit = deepcopy(drc_skeleton)
     overwriteparameters!.(drc_fit|>collect, drc_ref|>collect)
     @show likelihood.(pyramid,drc_fit|>collect)
-    for cmt in drc_fit
+    """for cmt in drc_fit
         if :opt in keys(cmt.misc)
             opt = cmt.misc[:opt]
             cmt.misc[:opt]=(minimizer = opt.minimizer, minimum = -likelihood(pyramid,cmt),  hessian = opt.hessian,result=opt.result)
         end
-    end
+    end"""
     
     drc_plot=plot(dataplots, drc_fit|>collect; label = ["all contacts" "at home"],legend=(0.1,0.96),ylim=(0,0.4),color = [:royalblue :firebrick],
 title = "synthetic matrix (DRC)")
@@ -274,7 +274,12 @@ function parameterestimates(fit)
         end for cmt in fit] 
     (parnames=parnames, estimates = first.(res), min_se = getindex.(res,2),ll = last.(res))
 end
-function CI(fit)
+function CI(fit) # for MLE
+    est = parameterestimates(fit)
+    (CI=[[min_se min_se[:,1].+min_se[:,2].*[-1.96 1.96]] for min_se in est.min_se], ll=est.ll)
+end
+
+function CrI(fit) # for MCMC
     est = parameterestimates(fit)
     (CI=[[min_se min_se[:,1].+min_se[:,2].*[-1.96 1.96]] for min_se in est.min_se], ll=est.ll)
 end

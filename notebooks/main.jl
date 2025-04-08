@@ -9,9 +9,9 @@
 #       format_version: '1.5'
 #       jupytext_version: 1.16.6
 #   kernelspec:
-#     display_name: Julia 14 Threads 1.9.3
+#     display_name: Julia Multithreads 1.9.3
 #     language: julia
-#     name: julia-14-threads-1.9
+#     name: julia-multithreads-1.9
 # ---
 
 using Pkg
@@ -21,6 +21,8 @@ Pkg.activate("../")
 include("../src/eigen.jl")
 include("../src/eigen_setup.jl")
 include("../src/eigen_output.jl")
+
+const serial=(Int[],Int[])
 
 # +
 # write data
@@ -39,7 +41,7 @@ tshuapa2015_fit = output_fit(
     zmb_skeleton = zmb2015,
     drc_skeleton = drc2015,
     dataplots = tshuapaplot
-    );
+    ,bayesian=true);
 zmb2015_fit = tshuapa2015_fit.zmb_fit;
 
 endemicplot = plot(plot(drc_endemic_ag),ylim=(0,0.35),xtickfontsize=9);
@@ -58,7 +60,7 @@ endemic2015_24_fit = output_fit(
     zmb_skeleton = [zmb2015,zmb2024],
     drc_skeleton = [drc2015,drc2024],
     dataplots = [tshuapaplot,endemicplot]
-    );
+    ,bayesian=true);
 zmb2015_24_fit = endemic2015_24_fit.zmb_fit
 drc2015_24_fit = endemic2015_24_fit.drc_fit;
 
@@ -85,7 +87,7 @@ kamituga2024_fit = output_sexual_fit(
     drc_sexual_skeleton = drc2024_sexual,
     drc_ref=last.(drc2015_24_fit|>collect),
     dataplots = collapseplot(drc_kamituga),
-    estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w]
+    estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w],bayesian=true
     );
 
 kivu2024_fit = output_sexual_fit(
@@ -96,7 +98,7 @@ kivu2024_fit = output_sexual_fit(
     drc_ref=last.(drc2015_24_fit|>collect),
     dataplots = collapseplot(drc_kivu),
     estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w]
-    );
+    ,bayesian=true);
 
 otherhz2024_fit = output_sexual_fit(
     drc_otherhz,
@@ -105,7 +107,7 @@ otherhz2024_fit = output_sexual_fit(
     drc_sexual_skeleton = drc2024_sexual,
     drc_ref=last.(drc2015_24_fit|>collect),
     dataplots = collapseplot(drc_otherhz),
-    estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w]
+    estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w],bayesian=true
     );
 
 # +
@@ -134,7 +136,7 @@ burundi2024_fit = output_sexual_fit(
     drc_ref=drc_ref,
     dataplots = collapseplot(burundi),
     estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w]
-    );
+    ,bayesian=true);
 # -
 kamituga2024_skeleton=deepcopy(kamituga2024_fit)
 for cm in kamituga2024_skeleton.zmb_fit for el in cm.addmat el.*=0. end end
@@ -326,5 +328,7 @@ plot([plot(casegens[x,:], xticks=(1:16,repeat(makeagegrouplabel(drc_kivu),2)),xr
 
 plot([mean([((est.CI[x][1:8].-1).^2) for x in 1:4],Ib_weights) for est in [est_kamituga,est_kivu,est_otherhz,est_burundi]],linealpha=[ones(3);0])|>display
 [mean([est.CI[x][9:10] for x in 1:4]./eig_endemic.eigval,Ib_weights) for est in [est_kamituga,est_kivu,est_otherhz,est_burundi]]
+
+
 
 

@@ -14,6 +14,6 @@ services:
       - .:/home/jovyan/work
 
     command: >
-        bash -c 'julia -e "using Pkg;Pkg.activate(\"./work\");Pkg.instantiate()"
+        bash -c 'julia -e "using Pkg;Pkg.activate(\"./work\");Pkg.instantiate();Pkg.precompile()"
         && julia -e "using IJulia;IJulia.installkernel(\"Julia Multithreads\",env=Dict(\"JULIA_NUM_THREADS\" => \"14\",))" &&
         start.sh jupyter lab'

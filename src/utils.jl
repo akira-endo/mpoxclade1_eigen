@@ -36,4 +36,10 @@ savefigname(filename::AbstractString; save = true) = plt->
 begin 
     @suppress if save savefig(plt,filename)|>display end
     @suppress display(plt)
-end 
+end
+
+function MCMCsubset(chn::Chains, samples) # from MCMCChains.jl ver 6.0.7
+    data = MCMCChains.AxisArray(chn.value[samples, :, :].data;
+                     iter = 1:length(samples), var = names(chn), chain = chains(chn))
+    return Chains(data, missing, chn.name_map, chn.info)
+end

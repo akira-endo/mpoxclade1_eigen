@@ -279,10 +279,10 @@ function b_optimise!(mutateparameters::Vector{Scalar}, p::AbstractArray{<:Pyrami
     if  applicable(modifier!,nothing) # i.e. if modifier was not set
         return runISR(nlls, init, hess, 1000)
     else
-        return runmcmc(nlls,init, 1000, 500)
+        return runmcmc(nlls,init, 2000, 500)
     end
 end
-function runISR(nll, init, hess, n_samples = 1000)
+function runISR(nll, init, hess, n_samples = 2000)
     props = rand(MvNormal(init, inv(hess)),n_samples*10)|>eachcol
     lpprops = logpdf.(Ref(MvNormal(init, inv(hess))), props)
     ld = .-nll.(props)
@@ -323,7 +323,6 @@ function runmcmc(nll, init, n_samples = 1000, n_adapts = 500)
         @retry if typeof(e) == ArgumentError seedint+=1 end
     end
     push!(serial[2], seedint)
-
     ## post processing
     transθ = getfield.(getfield.(AHMCchain,:z),:θ)[n_adapts.+(1:n_samples)]
     len = transθ|>first|>length
@@ -358,7 +357,7 @@ function estimateparameters!(cms, p::Union{Pyramid,AbstractArray{<:Pyramid}}, pa
     opt = !bayesian ? optimise!(parms, p, cmt,sync=sync,modifier! = modifier!) : b_optimise!(parms, p, cmt,sync=sync,modifier! = modifier!)
     firstel.misc[:opt] = opt
         res[i]=opt
-        end# for (cmt, parms) in zip(cms, parameters)]
+        end
     else
         for i in 1:length(cms)
         (cmt, parms)= (zip(cms, parameters)|>collect)[i]
@@ -366,7 +365,7 @@ function estimateparameters!(cms, p::Union{Pyramid,AbstractArray{<:Pyramid}}, pa
     opt = !bayesian ? optimise!(parms, p, cmt,sync=sync,modifier! = modifier!) : b_optimise!(parms, p, cmt,sync=sync,modifier! = modifier!)
     firstel.misc[:opt] = opt
         res[i]=opt
-        end# for (cmt, parms) in zip(cms, parameters)]
+        end
     end
     res
 end
