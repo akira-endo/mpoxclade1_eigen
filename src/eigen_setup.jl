@@ -72,7 +72,7 @@ function propmix!(p::Pyramid,cm::ContactMatrix)#, bcond = [0.1,0.01])
     
     #modifier_ll=sum(log.(abs.(paramat.-1)))/10000 # prior adjustment
     
-    paramat .= (1 .-paramat).^2 ./2#exp.(.-paramat)/2#(1 .-paramat).^2/5 # transform for stable search within (0, 0.2)
+    paramat .= (1 .-paramat).^2 ./2 # transform for stable search
     paqa=[zeros(cm.ageinterval|>size) for x in 1:2]
     paqa_substitute=paramat|>eachrow|>collect
     for i in 1:2 paqa[i][last.(ind)|>unique|>sort].=paqa_substitute[i] end

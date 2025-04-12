@@ -229,7 +229,7 @@ struct NLLs{P<:Pyramid,C<:ContactMatrix}
     penalty::Float64
     sync::Vector{Symbol}
 end
-
+voidmodifier(x...)=0.
 function (nll::NLL)(x)
         for (parameter, el) in zip(nll.mutateparameters,x) parameter.=el end
         modifier_ll = nll.modifier!(nll.p, nll.cm) * nll.penalty
@@ -242,47 +242,47 @@ function (nlls::NLLs)(x)
         -sum(likelihood.(nlls.p,nlls.cm))-modifier_ll
 end
 
-function optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMatrix; sync=false,modifier!::Function = (x...)->0.) # sync is only placeholder in this method
+function optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMatrix; sync=false,modifier!::Function = voidmodifier) # sync is only placeholder in this method
     nll=NLL(p,cm,mutateparameters,modifier!, 10000.)
     @time opt = optimize(nll, zeros(length(mutateparameters)).+1e-6,fill(500.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()),Optim.Options(g_tol=1e-5, x_tol=1e-8))
     hess = FiniteDiff.finite_difference_hessian(nll,opt.minimizer)
     nll(opt.minimizer)
-    (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess ,result=opt)
+    (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess ,result=opt,nll=nll)
 end
 
-function optimise!(mutateparameters::Vector{Scalar}, p::AbstractArray{<:Pyramid}, cm::AbstractArray{<:ContactMatrix}; sync = Symbol[], modifier!::Function = (x...)->0.)
+function optimise!(mutateparameters::Vector{Scalar}, p::AbstractArray{<:Pyramid}, cm::AbstractArray{<:ContactMatrix}; sync = Symbol[], modifier!::Function = voidmodifier)
     nlls=NLLs(p,cm,mutateparameters,modifier!,10000.,sync)
     @time opt = optimize(nlls, zeros(length(mutateparameters)).+1e-6,fill(100.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()), Optim.Options(g_tol=1e-5, x_tol=1e-8, time_limit=1800.))
     hess = FiniteDiff.finite_difference_hessian(nlls,opt.minimizer)
     nlls(opt.minimizer)#for (parameter, el) in zip(mutateparameters,opt.minimizer) parameter.=el end
-    (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess,result=opt)
+    (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess,result=opt,nll=nlls)
 end
 
 ## optimise! using MCMC
-function b_optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMatrix; sync=false,modifier!::Function = (x...)->0.) # sync is only placeholder in this method
+function b_optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMatrix; sync=false,modifier!::Function = voidmodifier) # sync is only placeholder in this method
     opt = optimise!(mutateparameters, p, cm; sync=sync,modifier! = modifier!)
     init = opt.minimizer
     hess = opt.hessian
     nll=NLL(p,cm,mutateparameters,modifier!,10000.)
 
     if applicable(modifier!,nothing) # i.e. if modifier was not set
-        return runISR(nll, init, hess, 1000)
+        return runISR(nll, init, hess, 2000)
     else
-        return runmcmc(nll,init, 1000, 500)
+        return runmcmc(nll,init, 2000, 500)
     end
 end
-function b_optimise!(mutateparameters::Vector{Scalar}, p::AbstractArray{<:Pyramid}, cm::AbstractArray{<:ContactMatrix}; sync = Symbol[], modifier!::Function = (x...)->0.)
+function b_optimise!(mutateparameters::Vector{Scalar}, p::AbstractArray{<:Pyramid}, cm::AbstractArray{<:ContactMatrix}; sync = Symbol[], modifier!::Function = voidmodifier)
     opt = optimise!(mutateparameters, p, cm; sync = sync, modifier! = modifier!)
     init = opt.minimizer
     hess = opt.hessian
     nlls=NLLs(p,cm,mutateparameters,modifier!,10000.,sync)
     if  applicable(modifier!,nothing) # i.e. if modifier was not set
-        return runISR(nlls, init, hess, 1000)
+        return runISR(nlls, init, hess, 2000)
     else
         return runmcmc(nlls,init, 2000, 500)
     end
 end
-function runISR(nll, init, hess, n_samples = 2000)
+function runISR(nll, init, hess, n_samples = 1000)
     props = rand(MvNormal(init, inv(hess)),n_samples*10)|>eachcol
     lpprops = logpdf.(Ref(MvNormal(init, inv(hess))), props)
     ld = .-nll.(props)
@@ -292,7 +292,7 @@ function runISR(nll, init, hess, n_samples = 2000)
     chain = setinfo(Chains(res), (logdensity=ld,))
     med = quantile(chain,q=[0.5]).nt[2]
     nll(med) # update contact matrix via nll
-    (med = med, ld = ld, chain=chain, lp = nothing)
+    (med = med, ld = ld, chain=chain, nll=nll)
 end
 function runmcmc(nll, init, n_samples = 1000, n_adapts = 500)
     @model function poistrick(x=0, nll_input = nll, len = length(nll.mutateparameters))
@@ -342,13 +342,13 @@ function runmcmc(nll, init, n_samples = 1000, n_adapts = 500)
     chain = setinfo(Chains(vcat.(par,vw)), (logdensity=ld,))
     med = quantile(chain,q=[0.5]).nt[2]
     LogDensityProblems.logdensity(lp, log.(med)) # update contact matrix via nll
-    (med = med, ld = ld, chain=chain, lp = lp)
+    (med = med, ld = ld, chain=chain,nll=nll)
 end
 
 
 
 
-function estimateparameters!(cms, p::Union{Pyramid,AbstractArray{<:Pyramid}}, parameters;sync=false,modifier!::Function = (x...)->0., bayesian=false)
+function estimateparameters!(cms, p::Union{Pyramid,AbstractArray{<:Pyramid}}, parameters;sync=false,modifier!::Function = voidmodifier, bayesian=false)
     res = Vector{Any}(undef, length(cms))
     if length(cms)>2
     Threads.@threads for i in 1:length(cms)
@@ -376,6 +376,42 @@ function overwriteparameters!(c1::ContactMatrix,c2::ContactMatrix, parnames = tr
     end
 end
 
+## Handling MCMC chain
+chainof(cm::ContactMatrix)=cm.misc[:opt].chain
+chainof(cm::AbstractVector{<:ContactMatrix})=cm[1].misc[:opt].chain
+function MCMCiterate(f::Function, cm::ContactMatrix)
+    med=copy(cm.misc[:opt].med)
+    len=length(med)
+    out = [begin
+            parv=collect(parvec)
+            if len>=10 parv[1:len-2].=sqrt.(2parv[1:len-2]).+1 end
+            cm.misc[:opt].nll(parv) # update cm with MCMC slice
+            f(cm)
+    end for parvec in (chainof(cm)|>Array|>eachrow)]
+    
+    if len>=10 med[1:len-2].=sqrt.(2med[1:len-2]).+1 end
+    cm.misc[:opt].nll(med) # revert cm to median estimates
+    out
+end
+
+function pwlikelihood(cm)
+    p = cm.misc[:opt].nll.p
+    ps = (Pyramid(cases,p.casecategories,p.ageinterval,p.graphlabel,p.misc) for cases in onehot_vov(p.cases))
+    likelihood.(ps,Ref(cm))
+end
+    
+function waic(cm::ContactMatrix)
+    nll = cm.misc[:opt].nll
+    casevec=vcat(nll.p.cases...)
+    pwl = MCMCiterate(pwlikelihood,cm)
+    mcmclen=length(pwl)
+    pwlmat = reduce(hcat,pwl)'
+    waic_k = [-2*(Turing.logsumexp(col) - log(mcmclen) - var(col)) for col in eachcol(pwlmat)]
+    waic = sum(waic_k,Weights(casevec)) - 2*(Turing.logfactorial(sum(casevec))-sum(Turing.logfactorial.(casevec))) # 2nd term: factorials in mutlnomial pdf
+    se_k = [-2√(var(LogNormal(0,std(col)))/mcmclen  + 2var(col)^2/(mcmclen-1)) for col in eachcol(pwlmat)]
+    se_waic = √sum(se_k.^2,Weights(casevec)) #2sqrt(sum([var(col,corrected=false) for col in eachcol(pwlmat)],Weights(casevec)))
+    (waic, se_waic)
+end
 
 ## Data
 #load contact survey data

@@ -7,11 +7,11 @@
 #       extension: .jl
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.16.1
+#       jupytext_version: 1.16.6
 #   kernelspec:
-#     display_name: Julia 1.9.3
+#     display_name: Julia Multithreads 1.9.3
 #     language: julia
-#     name: julia-1.9
+#     name: julia-multithreads-1.9
 # ---
 
 using Pkg
@@ -28,24 +28,55 @@ gr(fontfamily="Helvetica",foreground_color_legend = nothing,background_color_leg
 
 # +
 endemicplot = plot(plot(drc_endemic_ag),ylim=(0,0.35),xtickfontsize=9)
-
+tshuapaplot = plot(tshuapa_h2hag,color=:black)
 endemic2015_24_fit = output_fit(
     [tshuapa_h2hag,drc_endemic_ag];
     zmb_skeleton = [zmb2015,zmb2024],
     drc_skeleton = [drc2015,drc2024],
-    dataplots = endemicplot
+    dataplots = [tshuapaplot,endemicplot], bayesian=true
     );
+
 zmb2015_24_fit = endemic2015_24_fit.zmb_fit
 drc2015_24_fit = endemic2015_24_fit.drc_fit;
 # -
 
-# add new parameters for the group just under partially vaccinated
-for cm_vec in zmb2015_24_fit
-    for cm in cm_vec
-        cm.parameters[:s_postvax]=fill(0.5)
-        cm.susceptibility[1][end-2]=cm.parameters[:s_postvax]
-    end
-end 
+loadfit = load("../outputs/sexualfit_main.jld2") # load MCMC results
+
+# functions to create contact matrices for a given year
+filters = [nothing, (phys_contact=1,),(cnt_home=1,),(phys_contact=1,cnt_home=1)]
+drc_matrices(year,filters=filters) = @suppress (;zip([:all, :phys, :home, :physhome] ,getfield.(contactmatrix.(:zimbabwe_survey, Ref(drc_endemic_ag), "COD", filters,year=year,refyear=2012,refcountrycode="MAN"),:matrix).|>first)...)
+bdi_matrices(year,filters=filters) = @suppress (;zip([:all, :phys, :home, :physhome] ,getfield.(contactmatrix.(:zimbabwe_survey, Ref(drc_endemic_ag), "BDI", filters,year=year,refyear=2012,refcountrycode="MAN"),:matrix).|>first)...)
+# note: For 2024 census data use "BDIC" instead of "BDI". year has to be 2024, otherwise it will throw an error
+
+# +
+# update community contact matrix
+kivuCMs = loadfit["kivu2024_fit"][1] # vector of ContactMatrix [all, phys, home, physhome]
+for (cm, mat) in zip(kivuCMs, drc_matrices(2025))
+    # replace community contact elements of cm with mat.
+    # replacing [1,2] only will work ([1,4] is a shallow copy)
+    cm.matrix[1,2].=mat./2 # /2 because sex-specific
+end
+
+burundiCMs = loadfit["burundi2024_fit"][1] # vector of ContactMatrix [all, phys, home, physhome]
+for (cm, mat) in zip(burundiCMs, bdi_matrices(2025))
+    # replace community contact elements of cm with mat.
+    # replacing [1,2] only will work ([1,4] is a shallow copy)
+    cm.matrix[1,2].=mat./2 # /2 because sex-specific
+end
+# -
+
+kivu_eigvals = MCMCiterate.(Ref(dominanteigval), kivuCMs|>collect)
+burundi_eigvals = MCMCiterate.(Ref(dominanteigval), burundiCMs|>collect)
+
+kivuCMs_nosexual = deepcopy(kivuCMs)
+burundiCMs_nosexual = deepcopy(burundiCMs)
+function dominanteigval_nosexual(cm)
+    cm.addmat.=zero(cm.addmat)
+    dominanteigval(cm)
+end
+
+kivu_eigvals_nosexual = MCMCiterate.(Ref(dominanteigval_nosexual), kivuCMs_nosexual|>collect)
+burundi_eigvals_nosexual = MCMCiterate.(Ref(dominanteigval_nosexual), burundiCMs_nosexual|>collect)
 
 # ### DRC
 

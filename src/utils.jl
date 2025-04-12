@@ -43,3 +43,21 @@ function MCMCsubset(chn::Chains, samples) # from MCMCChains.jl ver 6.0.7
                      iter = 1:length(samples), var = names(chn), chain = chains(chn))
     return Chains(data, missing, chn.name_map, chn.info)
 end
+function onehot_vov(v::AbstractVector{<:AbstractVector}) # one-hot vector of vector
+    return　Iterators.flatten(((begin
+            z = [zeros(eltype(vi),length(vi)) for vi in v]
+            z[i][j] = 1
+            z
+        end for j in 1:length(v[i]))
+        for i in 1:length(v)
+    ))
+end
+function elhot_vov(v::AbstractVector{<:AbstractVector}) # element-hot vector of vector
+    return　Iterators.flatten(((begin
+            z = [zeros(eltype(vi),length(vi)) for vi in v]
+            z[i][j] = vi[j]
+            z
+        end for j in 1:length(v[i]))
+        for i in 1:length(v)
+    ))
+end
