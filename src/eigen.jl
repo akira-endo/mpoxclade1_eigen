@@ -355,7 +355,7 @@ function estimateparameters!(cms, p::Union{Pyramid,AbstractArray{<:Pyramid}}, pa
         (cmt, parms)= (zip(cms, parameters)|>collect)[i]
         firstel = typeof(cmt) <: ContactMatrix ? cmt : first(cmt) # if cmt is an array of ContactMatrix take the first
     opt = !bayesian ? optimise!(parms, p, cmt,sync=sync,modifier! = modifier!) : b_optimise!(parms, p, cmt,sync=sync,modifier! = modifier!)
-    firstel.misc[:opt] = opt
+    for el in cmt el.misc[:opt] = opt end
         res[i]=opt
         end
     else
@@ -363,7 +363,7 @@ function estimateparameters!(cms, p::Union{Pyramid,AbstractArray{<:Pyramid}}, pa
         (cmt, parms)= (zip(cms, parameters)|>collect)[i]
         firstel = typeof(cmt) <: ContactMatrix ? cmt : first(cmt) # if cmt is an array of ContactMatrix take the first
     opt = !bayesian ? optimise!(parms, p, cmt,sync=sync,modifier! = modifier!) : b_optimise!(parms, p, cmt,sync=sync,modifier! = modifier!)
-    firstel.misc[:opt] = opt
+    for el in cmt el.misc[:opt] = opt end
         res[i]=opt
         end
     end

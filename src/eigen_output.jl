@@ -280,10 +280,8 @@ function CI(fit) # for MLE
 end
 
 function CrI(fit) # for MCMC
-    est = parameterestimates(fit)
-    (CI=[[min_se min_se[:,1].+min_se[:,2].*[-1.96 1.96]] for min_se in est.min_se], ll=est.ll)
+    [describe(cmt.misc[:opt].chain)[2][:,[Symbol("50.0%"),Symbol("2.5%"),Symbol("97.5%")]] for cmt in fit]
 end
-
 function eigenanalysis(fit)
     res=[begin
             ngmat = ngm(cmt)
@@ -294,6 +292,18 @@ function eigenanalysis(fit)
         end for cmt in fit]
     (eigcases = first.(res), eigval0=last.(res), eigval = dominanteigval.(fit|>collect),ngm=getindex.(res,2))
 end
+
+function b_eigenanalysis(fit)
+    res=[begin
+            ngmat = ngm(cmt)
+            eigvec = groupsplit(eigvecs(collapseblockmat(ngmat))[:,end].|>Real,4)
+            eigcases = (ngmat*eigvec)./sum(sum.(ngmat*eigvec))
+            eigval0= eigvals(ngmat[2:2:4,2:2:4]|>collapseblockmat)[end]|>Real
+           (eigcases, ngmat, eigval0)
+        end for cmt in fit]
+    (eigcases = first.(res), eigval0=last.(res), eigval = MCMCiterate.(Ref(dominanteigval),fit|>collect),ngm=getindex.(res,2))
+end
+
 function vaccineRmap(cmt, R0adjfactor; targetidx = 5:6, R0baseline = 0.82, ve = 0.86, poprange = (0:0.25:50)./100, fswrange = (0:0.5:100)./100)
        addmat_w = cmt.parameters[:addmat_w][]
         addmat5_7 = getindex.(Ref(cmt.parameters),Symbol.("2","_addmat",5:7))

@@ -68,15 +68,23 @@ end
 kivu_eigvals = MCMCiterate.(Ref(dominanteigval), kivuCMs|>collect)
 burundi_eigvals = MCMCiterate.(Ref(dominanteigval), burundiCMs|>collect)
 
-kivuCMs_nosexual = deepcopy(kivuCMs)
-burundiCMs_nosexual = deepcopy(burundiCMs)
+kivuCMs_nosexual = deepcopy(zmb2015_24_fit)
+for (cm, mat) in zip(kivuCMs_nosexual, drc_matrices(2025))
+    # replace community contact elements of cm with mat.
+    cm[2].matrix[1].=mat
+end
+burundiCMs_nosexual = deepcopy(zmb2015_24_fit)
+for (cm, mat) in zip(burundiCMs_nosexual, bdi_matrices(2025))
+    # replace community contact elements of cm with mat.
+    cm[2].matrix[1].=mat
+end
 function dominanteigval_nosexual(cm)
     cm.addmat.=zero(cm.addmat)
     dominanteigval(cm)
 end
 
-kivu_eigvals_nosexual = MCMCiterate.(Ref(dominanteigval_nosexual), kivuCMs_nosexual|>collect)
-burundi_eigvals_nosexual = MCMCiterate.(Ref(dominanteigval_nosexual), burundiCMs_nosexual|>collect)
+kivu_eigvals_nosexual = MCMCiterate.(Ref(dominanteigval_nosexual), kivuCMs_nosexual|>collect.|>last)
+burundi_eigvals_nosexual = MCMCiterate.(Ref(dominanteigval_nosexual), burundiCMs_nosexual|>collect.|>last)
 
 # ### DRC
 
