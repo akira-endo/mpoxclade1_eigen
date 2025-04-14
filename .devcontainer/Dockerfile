@@ -53,7 +53,7 @@ RUN R -e 'library(remotes);　\
 	remotes::install_version("hhh4contacts", version="0.13.3", repos= "https://cloud.r-project.org/"); \
 	remotes::install_version("factoextra", version="1.0.7", repos= "https://cloud.r-project.org/"); \
 	remotes::install_version("countrycode", version="1.6.0", repos= "https://cloud.r-project.org/"); \
-	devtools::install_version("royston",version="1.2") \
+	devtools::install_version("royston",version="1.2", repos= "https://cloud.r-project.org/") \
 	'
 
 # Fix the issue of old libstdc++

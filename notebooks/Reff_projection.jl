@@ -17,7 +17,9 @@
 using Pkg
 Pkg.activate("../")
 
-Pkg.instantiate()
+# +
+#Pkg.instantiate()
+# -
 
 # load functions
 include("../src/eigen.jl");
@@ -85,6 +87,17 @@ end
 
 kivu_eigvals_nosexual = MCMCiterate.(Ref(dominanteigval_nosexual), kivuCMs_nosexual|>collect.|>last)
 burundi_eigvals_nosexual = MCMCiterate.(Ref(dominanteigval_nosexual), burundiCMs_nosexual|>collect.|>last)
+
+# +
+modelweights=[0.1,0.2,0.5,0.2] # values are tekitou
+avg_kivu = MixtureModel([MixtureModel(Normal.(post./post_nosexual,0)) for (post,post_nosexual) in zip(kivu_eigvals,kivu_eigvals_nosexual)],modelweights)
+@show quantile(avg_kivu,[0.5,0.025,0.975]) # relative Reff for clade Ib relative to Ia
+avg_kivu = MixtureModel([MixtureModel(Normal.(post./post_nosexual,0)) for (post,post_nosexual) in zip(kivu_eigvals,kivu_eigvals_nosexual)],modelweights)
+@show quantile(avg_kivu,[0.5,0.025,0.975]) # relative Reff for clade Ib relative to Ia
+
+avg_burundi = MixtureModel([MixtureModel(Normal.(post./post_nosexual,0)) for (post,post_nosexual) in zip(burundi_eigvals,burundi_eigvals_nosexual)],modelweights)
+@show quantile(avg_burundi,[0.5,0.025,0.975])
+# -
 
 # ### DRC
 
