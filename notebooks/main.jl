@@ -30,6 +30,9 @@ const serial=(Int[],Int[])
 
 # load data
 #datasets = readJSON(dir = "../data/pyramid/")
+
+# load MCMC results
+loadfit = load("../outputs/sexualfit_main.jld2")
 # -
 
 gr(fontfamily="Helvetica",foreground_color_legend = nothing,background_color_legend = nothing, titlefontsize=11, tickfontsize=10, legendfontsize=8,labelfontsize=10,grid=true, tick_direction=:out,size=(400,300))
@@ -40,18 +43,30 @@ tshuapa2015_fit = output_fit(
     tshuapa_h2hag,
     zmb_skeleton = zmb2015,
     drc_skeleton = drc2015,
-    dataplots = tshuapaplot
-    ,bayesian=true);
+    dataplots = tshuapaplot,
+    bayesian=true);
 zmb2015_fit = tshuapa2015_fit.zmb_fit;
+
+# Fit to 2024 data in DRC (only required for validation in the next cell)
+endemicplot = plot(plot(drc_endemic_ag),ylim=(0,0.35),xtickfontsize=9);
+endemic2024_fit = output_fit(
+    drc_endemic_ag,
+    zmb_skeleton = zmb2024,
+    drc_skeleton = drc2024,
+    dataplots = endemicplot,
+    bayesian=true
+    );
 
 endemicplot = plot(plot(drc_endemic_ag),ylim=(0,0.35),xtickfontsize=9);
 endemic2024_validate = output_validate(
     drc_endemic_ag,
-    zmb_skeleton = zmb2024,
+    zmb_skeleton = endemic2024_fit.zmb_fit,
     zmb_ref = tshuapa2015_fit.zmb_fit,
-    drc_skeleton = drc2024,
+    drc_skeleton = endemic2024_fit.drc_fit,
     drc_ref = tshuapa2015_fit.drc_fit,
-    dataplots = endemicplot);
+    dataplots = endemicplot,
+    bayesian=true
+    );
 
 
 # Fit to both 2015 and 2024 clade Ia data
@@ -59,8 +74,8 @@ endemic2015_24_fit = output_fit(
     [tshuapa_h2hag,drc_endemic_ag];
     zmb_skeleton = [zmb2015,zmb2024],
     drc_skeleton = [drc2015,drc2024],
-    dataplots = [tshuapaplot,endemicplot]
-    ,bayesian=true);
+    dataplots = [tshuapaplot,endemicplot],
+    bayesian=true);
 zmb2015_24_fit = endemic2015_24_fit.zmb_fit
 drc2015_24_fit = endemic2015_24_fit.drc_fit;
 
@@ -87,8 +102,10 @@ kamituga2024_fit = output_sexual_fit(
     drc_sexual_skeleton = drc2024_sexual,
     drc_ref=last.(drc2015_24_fit|>collect),
     dataplots = collapseplot(drc_kamituga),
-    estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w],bayesian=true
-    );
+    estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w],
+    bayesian=true,
+    load = loadfit["kamituga2024_fit"]
+  );
 
 kivu2024_fit = output_sexual_fit(
     drc_kivu,
@@ -97,8 +114,10 @@ kivu2024_fit = output_sexual_fit(
     drc_sexual_skeleton = drc2024_sexual,
     drc_ref=last.(drc2015_24_fit|>collect),
     dataplots = collapseplot(drc_kivu),
-    estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w]
-    ,bayesian=true);
+    estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w],
+    bayesian=true,
+    load=loadfit["kivu2024_fit"]
+    );
 
 otherhz2024_fit = output_sexual_fit(
     drc_otherhz,
@@ -107,7 +126,9 @@ otherhz2024_fit = output_sexual_fit(
     drc_sexual_skeleton = drc2024_sexual,
     drc_ref=last.(drc2015_24_fit|>collect),
     dataplots = collapseplot(drc_otherhz),
-    estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w],bayesian=true
+    estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w],
+    bayesian=true,
+    load=loadfit["otherhz2024_fit"]
     );
 
 # +
@@ -135,8 +156,10 @@ burundi2024_fit = output_sexual_fit(
     drc_sexual_skeleton = drc2024_sexual_b,
     drc_ref=drc_ref,
     dataplots = collapseplot(burundi),
-    estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w]
-    ,bayesian=true);
+    estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w],
+    bayesian=true,
+    load=loadfit["burundi2024_fit"]
+    );
 # -
 kamituga2024_skeleton=deepcopy(kamituga2024_fit)
 for cm in kamituga2024_skeleton.zmb_fit for el in cm.addmat el.*=0. end end
@@ -185,8 +208,8 @@ burundi2024_validate = output_validate(
 
 
 # save results
-outputdict = Dict(["kamituga2024_fit","otherhz2024_fit","kivu2024_fit","burundi2024_fit"].=>[kamituga2024_fit,otherhz2024_fit,kivu2024_fit,burundi2024_fit])
-#@suppress(save("../outputs/sexualfit_main.jld2",outputdict))
+outputdict = Dict(["endemic2015_24_fit","kamituga2024_fit","otherhz2024_fit","kivu2024_fit","burundi2024_fit"].=>[endemic2015_24_fit, kamituga2024_fit,otherhz2024_fit,kivu2024_fit,burundi2024_fit])
+#@suppress(save("../outputs/sexualfit_main2.jld2",outputdict))
 
 # ## Main figures
 
@@ -209,29 +232,37 @@ plot(burundi2024_fit.zmb_plot, burundi2024_validate.zmb_fit|>collect, title="Bur
 # ## Results summary
 
 # +
-est_endemic = CI(endemic2015_24_fit.zmb_fit|>collect.|>first)
-est_kivu = CI(kivu2024_fit.zmb_fit)
-est_kamituga = CI(kamituga2024_fit.zmb_fit)
-est_otherhz = CI(otherhz2024_fit.zmb_fit)
-est_burundi = CI(burundi2024_fit.zmb_fit);
+endemic_ll = [cm.misc[:opt].nll(cm.misc[:opt].med) for cm in (endemic2015_24_fit.zmb_fit|>collect.|>first)]
+est_kivu = CrI(kivu2024_fit.zmb_fit)
+est_kamituga = CrI(kamituga2024_fit.zmb_fit)
+est_otherhz = CrI(otherhz2024_fit.zmb_fit)
+est_burundi = CrI(burundi2024_fit.zmb_fit);
 
+kivu_waic = kivu2024_fit.zmb_fit|>collect.|>waic.|>first
+kamituga_waic=waic.(kamituga2024_fit.zmb_fit|>collect).|>first
+otherhz_waic=waic.(otherhz2024_fit.zmb_fit|>collect).|>first
+end_kivu_scores = endemic_ll.+0.5kivu_waic #.+ 0.25kamituga_waic.+ 0.25otherhz_waic
 # model weights
-Ib_weights = pweights(.-(est_kivu.ll.+est_endemic.ll).|>exp|>Base.Fix2(normalize,1))
+Ib_weights = pweights(.-(end_kivu_scores.-minimum(end_kivu_scores)).|>exp|>Base.Fix2(normalize,1))
 # -
 
-eig_kamituga=eigenanalysis(kamituga2024_fit.zmb_fit)
-eig_kivu=eigenanalysis(kivu2024_fit.zmb_fit)
-eig_otherhz=eigenanalysis(otherhz2024_fit.zmb_fit)
-eig_burundi=eigenanalysis(burundi2024_fit.zmb_fit);
+eig_kamituga=b_eigenanalysis(kamituga2024_fit.zmb_fit)
+eig_kivu=b_eigenanalysis(kivu2024_fit.zmb_fit)
+eig_otherhz=b_eigenanalysis(otherhz2024_fit.zmb_fit)
+eig_burundi=b_eigenanalysis(burundi2024_fit.zmb_fit);
 
 # +
 # model averaged susceptibility estimates
-sus_0_5=MixtureModel(Normal.(getindex.(est_endemic.CI,1,1),getindex.(est_endemic.CI,1,2)),Ib_weights)
+sus_0_5=MixtureModel(posteriordist.(zmb2015_24_fit|>collect,1),Ib_weights)
 (mean(sus_0_5),quantile(sus_0_5,[0.025,0.975]))|>display
 
-sus_vax=MixtureModel(Normal.(getindex.(est_endemic.CI,2,1),getindex.(est_endemic.CI,2,2)),Ib_weights)
+sus_vax=MixtureModel(posteriordist.(zmb2015_24_fit|>collect,2),Ib_weights)
 (mean(sus_vax),quantile(sus_vax,[0.025,0.975]))|>display
+
 # -
+
+[quantile.(sus_0_5.components,q) for q in (0.025,0.5,0.975)]|>display
+[quantile.(sus_vax.components,q) for q in (0.025,0.5,0.975)]|>display
 
 # fraction of R0 attributable to sexual transmisssion
 (frac_R0 =[ (1 .-eig.eigval0./eig.eigval) for eig in [eig_kivu, eig_kamituga, eig_otherhz, eig_burundi]])|>display
@@ -328,7 +359,5 @@ plot([plot(casegens[x,:], xticks=(1:16,repeat(makeagegrouplabel(drc_kivu),2)),xr
 
 plot([mean([((est.CI[x][1:8].-1).^2) for x in 1:4],Ib_weights) for est in [est_kamituga,est_kivu,est_otherhz,est_burundi]],linealpha=[ones(3);0])|>display
 [mean([est.CI[x][9:10] for x in 1:4]./eig_endemic.eigval,Ib_weights) for est in [est_kamituga,est_kivu,est_otherhz,est_burundi]]
-
-
 
 

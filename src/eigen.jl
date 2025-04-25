@@ -65,8 +65,10 @@ ContactMatrix(m::Vector,a,s,p,am,mi)=ContactMatrix(m[:,:],a,s,p,am,mi)
 ContactMatrix(m,a,s,p,am::Vector,mi)=ContactMatrix(m,a,s,p,am[:,:],mi)
 ContactMatrix(m::Vector,a,s,p,am::Vector,mi)=ContactMatrix(m[:,:],a,s,p,am[:,:],mi)
 Base.length(cm::ContactMatrix)=1
-Base.iterate(cm::ContactMatrix) = (p, nothing)
-Base.iterate(cm::ContactMatrix) = nothing
+Base.iterate(cm::ContactMatrix,p) = nothing
+Base.iterate(cm::ContactMatrix) = (cm, nothing)
+#Base.iterate(cm::ContactMatrix,p) = (p, nothing)
+#Base.iterate(cm::ContactMatrix) = nothing
 
 ## functions
 include("../src/utils.jl")
@@ -266,8 +268,10 @@ function b_optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMa
     nll=NLL(p,cm,mutateparameters,modifier!,10000.)
 
     if applicable(modifier!,nothing) # i.e. if modifier was not set
+        println("method: importance sampling resampling")
         return runISR(nll, init, hess, 2000)
     else
+        println("method: No-U-turn sapler")
         return runmcmc(nll,init, 2000, 500)
     end
 end
@@ -277,8 +281,10 @@ function b_optimise!(mutateparameters::Vector{Scalar}, p::AbstractArray{<:Pyrami
     hess = opt.hessian
     nlls=NLLs(p,cm,mutateparameters,modifier!,10000.,sync)
     if  applicable(modifier!,nothing) # i.e. if modifier was not set
+        println("method: importance sampling resampling")
         return runISR(nlls, init, hess, 2000)
     else
+        println("method: No-U-turn sapler")
         return runmcmc(nlls,init, 2000, 500)
     end
 end
@@ -292,12 +298,12 @@ function runISR(nll, init, hess, n_samples = 1000)
     chain = setinfo(Chains(res), (logdensity=ld,))
     med = quantile(chain,q=[0.5]).nt[2]
     nll(med) # update contact matrix via nll
-    (med = med, ld = ld, chain=chain, nll=nll)
+    (med = med, ld = ld, chain=chain, nll=nll, ess = sum(w)^2/sum(w.^2))
 end
 function runmcmc(nll, init, n_samples = 1000, n_adapts = 500)
     @model function poistrick(x=0, nll_input = nll, len = length(nll.mutateparameters))
-        lpar ~ filldist(Normal(0,5),len-2)
-        lvw ~ filldist(Normal(0,2),2)
+        lpar ~ filldist(Normal(0,5),8)
+        lvw ~ filldist(Normal(0,2),len-8)
         transpar = sqrt.(2exp.(lpar)).+1
         x~Poisson(nll_input([transpar;exp.(lvw)]))
         Turing.@addlogprob! sum(lpar)+sum(lvw)
@@ -317,7 +323,7 @@ function runmcmc(nll, init, n_samples = 1000, n_adapts = 500)
             AdvancedHMC.NUTS(0.8),
             n_samples+n_adapts;
             n_adapts = n_adapts,
-            initial_params = [log.((init[1:end-2].-1).^2 ./2);log.(init[end-1:end])].+0.01,
+            initial_params = [log.((init[1:8].-1).^2 ./2);log.(init[9:end])].+0.01,
         )
     catch e
         @retry if typeof(e) == ArgumentError seedint+=1 end
@@ -326,13 +332,13 @@ function runmcmc(nll, init, n_samples = 1000, n_adapts = 500)
     ## post processing
     transθ = getfield.(getfield.(AHMCchain,:z),:θ)[n_adapts.+(1:n_samples)]
     len = transθ|>first|>length
-    par, vw = broadcast.(exp,getindex.(transθ, Ref(1:len-2))), broadcast.(exp,getindex.(transθ, Ref(len-1:len)))
+    par, vw = broadcast.(exp,getindex.(transθ, Ref(1:8))), broadcast.(exp,getindex.(transθ, Ref(len-1:len)))
 
     # rescale par to meet boundary conditions
     na = convert(Vector{Float64},nll.cm.misc[:pop])./2
     denomweights=Ref(na[4:7])./([sum(na[4:7]),1].*nll.cm.misc[:bcond])
-    pa = ((@view el[1:(len-2)÷2]) for el in par)
-    qa = ((@view el[(len-2)÷2+1:end]) for el in par)
+    pa = ((@view el[1:(8)÷2]) for el in par)
+    qa = ((@view el[(8)÷2+1:end]) for el in par)
     for (p,q) in zip(pa,qa)
         p./= sum(denomweights[1].* p)
         q./= sum(denomweights[2].* q)
@@ -379,17 +385,17 @@ end
 ## Handling MCMC chain
 chainof(cm::ContactMatrix)=cm.misc[:opt].chain
 chainof(cm::AbstractVector{<:ContactMatrix})=cm[1].misc[:opt].chain
-function MCMCiterate(f::Function, cm::ContactMatrix)
-    med=copy(cm.misc[:opt].med)
-    len=length(med)
+function MCMCiterate(f::Function, cm::ContactMatrix, chain::Chains=chainof(cm))
+    if haskey(cm.misc,:opt) med=copy(cm.misc[:opt].med) end
+    len=size(chain)[2]
     out = [begin
             parv=collect(parvec)
-            if len>=10 parv[1:len-2].=sqrt.(2parv[1:len-2]).+1 end
+            if len>=10 parv[1:8].=sqrt.(2parv[1:8]).+1 end
             cm.misc[:opt].nll(parv) # update cm with MCMC slice
             f(cm)
-    end for parvec in (chainof(cm)|>Array|>eachrow)]
+    end for parvec in (chain|>Array|>eachrow)]
     
-    if len>=10 med[1:len-2].=sqrt.(2med[1:len-2]).+1 end
+    if len>=10 med[1:8].=sqrt.(2med[1:8]).+1 end
     cm.misc[:opt].nll(med) # revert cm to median estimates
     out
 end
