@@ -144,10 +144,10 @@ function output_sexual_fit(
         @time drc_opt = estimateparameters!(drc_fit,pyramid,parameters;modifier! = propmix!,bayesian=bayesian)
     end
 
-    zmb_plot = plot(dataplots, zmb_fit|>collect; ascertainment=ascertainment,label = ["all contacts" "physical only" "at home" "physical & home"],legend=(0.1,0.96),ylim=(0,0.3), color = [1 1 2 2],linestyle = [:solid :dash],
+    zmb_plot = plot(dataplots, zmb_fit|>collect; ascertainment=ascertainment,label = ["all contacts" "physical only" "at home" "physical & home"].*" + sexual",legend=(0.1,0.96),ylim=(0,0.3), color = [1 1 2 2],linestyle = [:solid :dash],
     title = "empirical matrix (Zimbabwe)")
 
-    drc_plot=plot(dataplots, drc_fit|>collect; ascertainment=ascertainment, label = ["all contacts" "at home"],legend=(0.1,0.96),ylim=(0,0.3),color = [:royalblue :firebrick],
+    drc_plot=plot(dataplots, drc_fit|>collect; ascertainment=ascertainment, label = ["all contacts" "at home"].*" + sexual",legend=(0.1,0.96),ylim=(0,0.3),color = [:royalblue :firebrick],
 title = "synthetic matrix (DRC)")
     
     if preview 
@@ -236,10 +236,12 @@ function output_validate(
     if bayesian
         ess = getfield.(getindex.(getfield.(zmb_ref|>collect,:misc),:opt),:ess)
         lls_zmb = MCMCiterate.(cm->likelihood(pyramid,cm),zmb_fit|>collect,zmb_ref|>collect.|>chainof)
-        @show (mean.(lls_zmb),std.(lls_zmb)./(ess.-1))
+        @show (mean.(lls_zmb),std.(lls_zmb)./(ess.-1)) # likelihood loss
         vcases = vcat(pyramid.cases...)
-        @show (mean.(lls_zmb).-logpdf(Multinomial(sum(vcases),vcases./sum(vcases)),vcases))./sum(vcases)
+        @show (mean.(lls_zmb).-logpdf(Multinomial(sum(vcases),vcases./sum(vcases)),vcases))./sum(vcases) # KLD
     end
+    zmb_fit = deepcopy(zmb_skeleton)
+    overwriteparameters!.(zmb_fit|>collect, zmb_ref|>collect)
     """for cmt in zmb_fit
         if :opt in keys(cmt.misc)
             opt = cmt.misc[:opt]
@@ -257,7 +259,9 @@ function output_validate(
         lls_drc = MCMCiterate.(cm->likelihood(pyramid,cm),drc_fit|>collect,drc_ref|>collect.|>chainof)
         @show (mean.(lls_drc),std.(lls_drc)./(ess.-1))
         @show (mean.(lls_drc).-logpdf(Multinomial(sum(vcases),vcases./sum(vcases)),vcases))./sum(vcases)
-    end
+    end    
+    drc_fit = deepcopy(drc_skeleton)
+    overwriteparameters!.(drc_fit|>collect, drc_ref|>collect)
     """for cmt in drc_fit
         if :opt in keys(cmt.misc)
             opt = cmt.misc[:opt]
@@ -271,7 +275,9 @@ title = "synthetic matrix (DRC)")
         zmb_plot|>display
         drc_plot|>display
     end
-   (zmb_fit=zmb_fit,zmb_plot=zmb_plot,drc_fit=drc_fit,drc_plot=drc_plot,lls_zmb,lls_drc)
+   if bayesian return (zmb_fit=zmb_fit,zmb_plot=zmb_plot,drc_fit=drc_fit,drc_plot=drc_plot,lls_zmb,lls_drc)
+    else return (zmb_fit=zmb_fit,zmb_plot=zmb_plot,drc_fit=drc_fit,drc_plot=drc_plot)
+    end
 end
 
 # summarise results
@@ -297,6 +303,14 @@ end
 function posteriordist(cm::ContactMatrix,colid)
     MixtureModel(Normal.((chainof(cm)|>Array)[:,colid],0))
 end
+function posteriorjointdist(cm::ContactMatrix)
+    postarray = chainof(cm)|>Array
+    ngmat = ngm(cm)
+    eigval0= eigvals(ngmat[2:2:4,2:2:4]|>collapseblockmat)[end]|>Real
+    postarray[:,9:10]./=eigval0
+    MixtureModel(MvNormal.(postarray|>eachrow,0))
+end
+    
 function eigenanalysis(fit)
     res=[begin
             ngmat = ngm(cmt)
