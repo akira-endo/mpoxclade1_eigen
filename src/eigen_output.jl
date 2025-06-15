@@ -303,6 +303,9 @@ end
 function posteriordist(cm::ContactMatrix,colid)
     MixtureModel(Normal.((chainof(cm)|>Array)[:,colid],0))
 end
+function posteriordist(v::AbstractVector)
+    MixtureModel(Normal.(v,0))
+end
 function posteriorjointdist(cm::ContactMatrix)
     postarray = chainof(cm)|>Array
     ngmat = ngm(cm)
