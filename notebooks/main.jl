@@ -274,6 +274,15 @@ frac_R0 = [MixtureModel([MixtureModel(Normal.(post,0)) for post in loc],Ib_weigh
 quantile.(frac_R0,Ref([0.025,0.5,0.975]))|>display
 [quantile.(loc.components,Ref([0.025,0.5,0.975])) for loc in frac_R0]
 
+# fraction of R0 attributable to sexual transmisssion: Synthetic matrix
+eig_kamituga=b_eigenanalysis(kamituga2024_fit.drc_fit)
+eig_kivu=b_eigenanalysis(kivu2024_fit.drc_fit)
+eig_otherhz=b_eigenanalysis(otherhz2024_fit.drc_fit)
+eig_burundi=b_eigenanalysis(burundi2024_fit.drc_fit);
+frac_R0_samples =[ (broadcast.(-,1, broadcast.(/,eig.eigval0, eig.eigval))) for eig in [eig_kivu, eig_kamituga, eig_otherhz, eig_burundi]]
+frac_R0 = [MixtureModel([MixtureModel(Normal.(post,0)) for post in loc],pweights([0,1])) for loc in frac_R0_samples]
+quantile.(frac_R0,Ref([0.025,0.5,0.975]))|>display
+
 # +
 # transmission frequency heatmap
 eig_endemic = (ngm=endemic2015_24_fit.zmb_fit|>collect.|>last.|>ngm, eigcases=endemic2015_24_fit.zmb_fit|>collect.|>last.|>dominanteigvec.|>(x->[x]), eigval0 = endemic2015_24_fit.zmb_fit|>collect.|>first.|>dominanteigval,eigval = endemic2015_24_fit.zmb_fit|>collect.|>last.|>dominanteigval)
