@@ -65,8 +65,10 @@ ContactMatrix(m::Vector,a,s,p,am,mi)=ContactMatrix(m[:,:],a,s,p,am,mi)
 ContactMatrix(m,a,s,p,am::Vector,mi)=ContactMatrix(m,a,s,p,am[:,:],mi)
 ContactMatrix(m::Vector,a,s,p,am::Vector,mi)=ContactMatrix(m[:,:],a,s,p,am[:,:],mi)
 Base.length(cm::ContactMatrix)=1
-Base.iterate(cm::ContactMatrix) = (p, nothing)
-Base.iterate(cm::ContactMatrix) = nothing
+Base.iterate(cm::ContactMatrix,p) = nothing
+Base.iterate(cm::ContactMatrix) = (cm, nothing)
+#Base.iterate(cm::ContactMatrix,p) = (p, nothing)
+#Base.iterate(cm::ContactMatrix) = nothing
 
 ## functions
 include("../src/utils.jl")
@@ -244,7 +246,7 @@ end
 
 function optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMatrix; sync=false,modifier!::Function = voidmodifier) # sync is only placeholder in this method
     nll=NLL(p,cm,mutateparameters,modifier!, 10000.)
-    @time opt = optimize(nll, zeros(length(mutateparameters)).+1e-6,fill(500.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()),Optim.Options(g_tol=1e-5, x_tol=1e-8))
+    opt = optimize(nll, zeros(length(mutateparameters)).+1e-6,fill(500.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()),Optim.Options(g_tol=1e-5, x_tol=1e-8))
     hess = FiniteDiff.finite_difference_hessian(nll,opt.minimizer)
     nll(opt.minimizer)
     (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess ,result=opt,nll=nll)
@@ -252,7 +254,7 @@ end
 
 function optimise!(mutateparameters::Vector{Scalar}, p::AbstractArray{<:Pyramid}, cm::AbstractArray{<:ContactMatrix}; sync = Symbol[], modifier!::Function = voidmodifier)
     nlls=NLLs(p,cm,mutateparameters,modifier!,10000.,sync)
-    @time opt = optimize(nlls, zeros(length(mutateparameters)).+1e-6,fill(100.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()), Optim.Options(g_tol=1e-5, x_tol=1e-8, time_limit=1800.))
+    opt = optimize(nlls, zeros(length(mutateparameters)).+1e-6,fill(100.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()), Optim.Options(g_tol=1e-5, x_tol=1e-8, time_limit=1800.))
     hess = FiniteDiff.finite_difference_hessian(nlls,opt.minimizer)
     nlls(opt.minimizer)#for (parameter, el) in zip(mutateparameters,opt.minimizer) parameter.=el end
     (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess,result=opt,nll=nlls)
@@ -266,8 +268,10 @@ function b_optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMa
     nll=NLL(p,cm,mutateparameters,modifier!,10000.)
 
     if applicable(modifier!,nothing) # i.e. if modifier was not set
-        return runISR(nll, init, hess, 2000)
+        println("method: importance sampling resampling")
+        return runISR(nll, init, inv(hess), 2000)
     else
+        println("method: No-U-turn sapler")
         return runmcmc(nll,init, 2000, 500)
     end
 end
@@ -277,27 +281,35 @@ function b_optimise!(mutateparameters::Vector{Scalar}, p::AbstractArray{<:Pyrami
     hess = opt.hessian
     nlls=NLLs(p,cm,mutateparameters,modifier!,10000.,sync)
     if  applicable(modifier!,nothing) # i.e. if modifier was not set
-        return runISR(nlls, init, hess, 2000)
+        println("method: importance sampling resampling")
+        return runISR(nlls, init, inv(hess), 2000)
     else
+        println("method: No-U-turn sapler")
         return runmcmc(nlls,init, 2000, 500)
     end
 end
-function runISR(nll, init, hess, n_samples = 1000)
-    props = rand(MvNormal(init, inv(hess)),n_samples*10)|>eachcol
-    lpprops = logpdf.(Ref(MvNormal(init, inv(hess))), props)
-    ld = .-nll.(props)
+function runISR(nll, init, Σ, n_samples = 1000; propdist=MvNormal(init, Σ), transform! = identity)
+    props = rand(propdist,max(10n_samples,10000))|>eachcol
+    lpprops = logpdf.(Ref(propdist), props)
+    transform!(props)
+    if length(init)>3 # if sexual contact included
+        tr_props=(begin prop = collect(r); prop[1:8].=sqrt.(2 .*prop[1:8]).+1 end for r in props)
+        ld = .-nll.(tr_props)
+    else
+        ld = .-nll.(props)
+    end
     lw = ld.-lpprops
-    w = pweights(exp.(lw.-maximum(lw)))
+    w = pweights(normalize(exp.(lw.-maximum(lw)),1))
     res = sample(props, w, n_samples, replace = true)
     chain = setinfo(Chains(res), (logdensity=ld,))
     med = quantile(chain,q=[0.5]).nt[2]
     nll(med) # update contact matrix via nll
-    (med = med, ld = ld, chain=chain, nll=nll)
+    (med = med, ld = ld, chain=chain, nll=nll, ess_pre = sum(w)^2/sum(w.^2),ess = 10n_samples-sum((1 .-w).^n_samples),lpprops=lpprops)
 end
 function runmcmc(nll, init, n_samples = 1000, n_adapts = 500)
     @model function poistrick(x=0, nll_input = nll, len = length(nll.mutateparameters))
-        lpar ~ filldist(Normal(0,5),len-2)
-        lvw ~ filldist(Normal(0,2),2)
+        lpar ~ filldist(Normal(0,5),8)
+        lvw ~ filldist(Normal(0,2),len-8)
         transpar = sqrt.(2exp.(lpar)).+1
         x~Poisson(nll_input([transpar;exp.(lvw)]))
         Turing.@addlogprob! sum(lpar)+sum(lvw)
@@ -308,7 +320,7 @@ function runmcmc(nll, init, n_samples = 1000, n_adapts = 500)
             LogDensityProblemsAD.ADgradient(Val(:FiniteDifferences), lp,;fdm=FiniteDifferences.forward_fdm(2,1))
     )
     # run MCMC. Retry if stopped due to hitting NaN
-    seedint = isempty(serial[1]) ? 1 : pop!(serial[1])
+    seedint = 1#isempty(serial[1]) ? 1 : pop!(serial[1])
     AHMCchain=nothing
     @repeat 20 try
         Random.seed!(seedint)
@@ -317,28 +329,28 @@ function runmcmc(nll, init, n_samples = 1000, n_adapts = 500)
             AdvancedHMC.NUTS(0.8),
             n_samples+n_adapts;
             n_adapts = n_adapts,
-            initial_params = [log.((init[1:end-2].-1).^2 ./2);log.(init[end-1:end])].+0.01,
+            initial_params = [log.((init[1:8].-1).^2 ./2);log.(init[9:end])].+0.01,
         )
     catch e
         @retry if typeof(e) == ArgumentError seedint+=1 end
     end
-    push!(serial[2], seedint)
+    #push!(serial[2], seedint)
     ## post processing
     transθ = getfield.(getfield.(AHMCchain,:z),:θ)[n_adapts.+(1:n_samples)]
     len = transθ|>first|>length
-    par, vw = broadcast.(exp,getindex.(transθ, Ref(1:len-2))), broadcast.(exp,getindex.(transθ, Ref(len-1:len)))
+    par, vw = broadcast.(exp,getindex.(transθ, Ref(1:8))), broadcast.(exp,getindex.(transθ, Ref(9:len)))
 
     # rescale par to meet boundary conditions
     na = convert(Vector{Float64},nll.cm.misc[:pop])./2
     denomweights=Ref(na[4:7])./([sum(na[4:7]),1].*nll.cm.misc[:bcond])
-    pa = ((@view el[1:(len-2)÷2]) for el in par)
-    qa = ((@view el[(len-2)÷2+1:end]) for el in par)
+    pa = ((@view el[1:(8)÷2]) for el in par)
+    qa = ((@view el[(8)÷2+1:end]) for el in par)
     for (p,q) in zip(pa,qa)
         p./= sum(denomweights[1].* p)
         q./= sum(denomweights[2].* q)
     end
 
-    ld = getfield.(getfield.(getfield.(AHMCchain,:z),:ℓπ),:value)
+    ld = getfield.(getfield.(getfield.(AHMCchain,:z),:ℓπ),:value)[end-n_samples+1:end]
     chain = setinfo(Chains(vcat.(par,vw)), (logdensity=ld,))
     med = quantile(chain,q=[0.5]).nt[2]
     LogDensityProblems.logdensity(lp, log.(med)) # update contact matrix via nll
@@ -351,7 +363,7 @@ end
 function estimateparameters!(cms, p::Union{Pyramid,AbstractArray{<:Pyramid}}, parameters;sync=false,modifier!::Function = voidmodifier, bayesian=false)
     res = Vector{Any}(undef, length(cms))
     if length(cms)>2
-    Threads.@threads for i in 1:length(cms)
+    for i in 1:length(cms)
         (cmt, parms)= (zip(cms, parameters)|>collect)[i]
         firstel = typeof(cmt) <: ContactMatrix ? cmt : first(cmt) # if cmt is an array of ContactMatrix take the first
     opt = !bayesian ? optimise!(parms, p, cmt,sync=sync,modifier! = modifier!) : b_optimise!(parms, p, cmt,sync=sync,modifier! = modifier!)
@@ -359,12 +371,13 @@ function estimateparameters!(cms, p::Union{Pyramid,AbstractArray{<:Pyramid}}, pa
         res[i]=opt
         end
     else
+        #bayesian=false
         for i in 1:length(cms)
         (cmt, parms)= (zip(cms, parameters)|>collect)[i]
         firstel = typeof(cmt) <: ContactMatrix ? cmt : first(cmt) # if cmt is an array of ContactMatrix take the first
     opt = !bayesian ? optimise!(parms, p, cmt,sync=sync,modifier! = modifier!) : b_optimise!(parms, p, cmt,sync=sync,modifier! = modifier!)
-    for el in cmt el.misc[:opt] = opt end
-        res[i]=opt
+        for el in cmt el.misc[:opt] = opt end
+            res[i]=opt
         end
     end
     res
@@ -379,17 +392,18 @@ end
 ## Handling MCMC chain
 chainof(cm::ContactMatrix)=cm.misc[:opt].chain
 chainof(cm::AbstractVector{<:ContactMatrix})=cm[1].misc[:opt].chain
-function MCMCiterate(f::Function, cm::ContactMatrix)
-    med=copy(cm.misc[:opt].med)
-    len=length(med)
+ldof(cm::ContactMatrix)=cm.misc[:opt].ld
+function MCMCiterate(f::Function, cm::ContactMatrix, chain::Chains=chainof(cm))
+    if haskey(cm.misc,:opt) med=copy(cm.misc[:opt].med) end
+    len=size(chain)[2]
     out = [begin
             parv=collect(parvec)
-            if len>=10 parv[1:len-2].=sqrt.(2parv[1:len-2]).+1 end
+            if len>=10 parv[1:8].=sqrt.(2parv[1:8]).+1 end
             cm.misc[:opt].nll(parv) # update cm with MCMC slice
             f(cm)
-    end for parvec in (chainof(cm)|>Array|>eachrow)]
+    end for parvec in (chain|>Array|>eachrow)]
     
-    if len>=10 med[1:len-2].=sqrt.(2med[1:len-2]).+1 end
+    if len>=10 med[1:8].=sqrt.(2med[1:8]).+1 end
     cm.misc[:opt].nll(med) # revert cm to median estimates
     out
 end
@@ -400,7 +414,11 @@ function pwlikelihood(cm)
     likelihood.(ps,Ref(cm))
 end
     
-function waic(cm::ContactMatrix)
+function waic(cm::ContactMatrix, opt=cm.misc[:opt])
+    #replace opt
+    opt0 = cm.misc[:opt]
+    cm.misc[:opt]=opt
+    
     nll = cm.misc[:opt].nll
     casevec=vcat(nll.p.cases...)
     pwl = MCMCiterate(pwlikelihood,cm)
@@ -410,8 +428,41 @@ function waic(cm::ContactMatrix)
     waic = sum(waic_k,Weights(casevec)) - 2*(Turing.logfactorial(sum(casevec))-sum(Turing.logfactorial.(casevec))) # 2nd term: factorials in mutlnomial pdf
     se_k = [-2√(var(LogNormal(0,std(col)))/mcmclen  + 2var(col)^2/(mcmclen-1)) for col in eachcol(pwlmat)]
     se_waic = √sum(se_k.^2,Weights(casevec)) #2sqrt(sum([var(col,corrected=false) for col in eachcol(pwlmat)],Weights(casevec)))
+    cm.misc[:opt]=opt0 # restore opt
     (waic, se_waic)
 end
+include("../src/UniformSphere.jl")
+function propagateISR(cm::ContactMatrix, nsamples = 10000, opt=cm.misc[:opt])
+    nll = opt.nll
+    len = opt.chain|>length
+    ld=opt.ld[end-(len-1):end]
+    postarray = opt.chain|>Array.|>log
+    postarray[:,9:10].= [mean(postarray[:,9:10],dims=2) diff(postarray[:,9:10],dims=2)]
+    Σ = diagm(var(postarray,dims=1)|>vec)#cov(postarray)
+    init = vec(mean(postarray,dims=1))
+
+    # adaptive kernel size
+    β = 1 / (length(init) + 4)
+    c_i = (-2β/2).*((ld.-mean(ld)) .+ log(len)) .|>exp #sqrt of optimal kernel size as a heuristic
+    
+    function transform!(erow)
+        for r in erow
+            r[9:10].=[r[9]-r[10]/2,r[9]+r[10]/2]
+            r.=exp.(r)
+        end
+    end
+    propdist = MixtureModel(UniformSpheres.UniformSphere.(eachrow(postarray),Ref(Σ).*c_i.*1.78./100))
+    runISR(nll, init, Σ, nsamples; propdist = propdist, transform! = transform!)
+end
+function waicISR(cm::ContactMatrix,propagate=1)
+    opt = cm.misc[:opt]
+    opt=propagateISR(cm, length(opt.chain)*propagate,opt)
+    #for _ in 1:propagate
+    #    opt = propagateISR(cm, length(opt.chain)*10,opt)
+    #end
+    (waic(cm,opt),opt)
+end
+
 
 ## Data
 #load contact survey data
