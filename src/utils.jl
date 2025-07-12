@@ -1,3 +1,6 @@
+Scalar=Array{Float64,0}
+using Suppressor
+
 function groupsum(v::AbstractVector, breaks::AbstractVector)
     ids = range.(breaks[begin:end-1],breaks[begin+1:end].-1)
     sum.(getindex.(Ref(v),[ids;[breaks[end]:lastindex(v)]]))
@@ -28,3 +31,33 @@ end
 collapseblockmat(bm)= collapseblockmat(reduce(vcat, (reduce(hcat, row) for row in eachrow(bm))))
 collapseblockmat(bm::AbstractArray{<:Scalar})= getindex.(bm)
 collapseblockmat(bm::AbstractArray{<:Number})= bm
+
+savefigname(filename::AbstractString; save = true) = plt->
+begin 
+    @suppress if save savefig(plt,filename)|>display end
+    @suppress display(plt)
+end
+
+function MCMCsubset(chn::Chains, samples) # from MCMCChains.jl ver 6.0.7
+    data = MCMCChains.AxisArray(chn.value[samples, :, :].data;
+                     iter = 1:length(samples), var = names(chn), chain = chains(chn))
+    return Chains(data, missing, chn.name_map, chn.info)
+end
+function onehot_vov(v::AbstractVector{<:AbstractVector}) # one-hot vector of vector
+    return　Iterators.flatten(((begin
+            z = [zeros(eltype(vi),length(vi)) for vi in v]
+            z[i][j] = 1
+            z
+        end for j in 1:length(v[i]))
+        for i in 1:length(v)
+    ))
+end
+function elhot_vov(v::AbstractVector{<:AbstractVector}) # element-hot vector of vector
+    return　Iterators.flatten(((begin
+            z = [zeros(eltype(vi),length(vi)) for vi in v]
+            z[i][j] = vi[j]
+            z
+        end for j in 1:length(v[i]))
+        for i in 1:length(v)
+    ))
+end

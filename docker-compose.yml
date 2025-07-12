@@ -1,7 +1,7 @@
 version: "3"
 services:
   lab:
-    image: jupyter_clade1mpox:v02 
+    image: jupyter_clade1mpox:v03 
     container_name: clade1mpox_container 
     build:
         context: .
@@ -9,8 +9,11 @@ services:
 
     ports:
       - "8800:8888" # http://localhost:8800/lab to launch Jupyter Lab
-
+       
     volumes:
       - .:/home/jovyan/work
 
-    command: start.sh jupyter lab
+    command: >
+        bash -c 'julia -e "using Pkg;Pkg.activate(\"./work\");Pkg.instantiate();Pkg.precompile()"
+        && julia -e "using IJulia;IJulia.installkernel(\"Julia Multithreads\",env=Dict(\"JULIA_NUM_THREADS\" => \"14\",))" &&
+        start.sh jupyter lab'

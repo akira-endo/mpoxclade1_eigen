@@ -49,19 +49,22 @@ function output_fit(
         zmb_skeleton::NamedTuple,
         drc_skeleton,
         dataplots,
+        estkeys = [:s_infant,:s_vax],
         ascertainment=1,
-        preview = false)
+        preview = false,
+        bayesian=false
+    )
     
     zmb_fit = deepcopy(zmb_skeleton)
-    parameters  = [getindex.(Ref(cmt.parameters), [:s_infant,:s_vax]) for cmt in zmb_fit]
-    zmb_opt = estimateparameters!(zmb_fit,pyramid,parameters)
+    parameters  = [getindex.(Ref(cmt.parameters), estkeys) for cmt in zmb_fit]
+    zmb_opt = estimateparameters!(zmb_fit,pyramid,parameters,bayesian=bayesian)
 
     zmb_plot = plot(dataplots, zmb_fit|>collect; label = ["all contacts" "physical only" "at home" "physical & home"],legend=(0.1,0.96),ylim=(0,0.4), color = [1 1 2 2],linestyle = [:solid :dash],
     title = "empirical matrix (Zimbabwe)")
 
     drc_fit = deepcopy(drc_skeleton)
-    parameters  = [getindex.(Ref(cmt.parameters), [:s_infant,:s_vax]) for cmt in drc_fit]
-    drc_opt=estimateparameters!(drc_fit,pyramid, parameters)
+    parameters  = [getindex.(Ref(cmt.parameters), estkeys) for cmt in drc_fit]
+    drc_opt=estimateparameters!(drc_fit,pyramid, parameters,bayesian=bayesian)
 
     drc_plot=plot(dataplots, drc_fit|>collect;label = ["all contacts" "at home"],legend=(0.1,0.96),ylim=(0,0.4),color = [:royalblue :firebrick],
 title = "synthetic matrix (DRC)")
@@ -77,13 +80,17 @@ function output_fit(
         zmb_skeleton::AbstractArray,
         drc_skeleton::AbstractArray,
         dataplots,
+        estkeys = [:s_infant,:s_vax],
         ascertainment=1,
-        preview = false
+        preview = false,
+        bayesian=false,
+        sync=true
         )
+    if sync==true sync = estkeys end
     zmb_copy = deepcopy.(zmb_skeleton)
     zmb_fit = vectoriseNamedTuple(zmb_copy)
-    parameters  = [getindex.(Ref(cmt_vec[1].parameters), [:s_infant,:s_vax]) for cmt_vec in zmb_fit]
-    zmb_opt = estimateparameters!(zmb_fit,pyramids,parameters,sync = [:s_infant,:s_vax,:s_partvax])
+    parameters  = [getindex.(Ref(cmt_vec[1].parameters), estkeys) for cmt_vec in zmb_fit]
+    zmb_opt = estimateparameters!(zmb_fit,pyramids,parameters, bayesian=bayesian, sync = sync)
 
     zmb_plot = plot.(dataplots, zmb_copy.|>collect;label = ["all contacts" "physical only" "at home" "physical & home"],legend=(0.1,0.96),ylim=(0,0.4), color = [1 1 2 2],linestyle = [:solid :dash],
     title = "empirical matrix (Zimbabwe)")
@@ -91,8 +98,8 @@ function output_fit(
 
     drc_copy = deepcopy.(drc_skeleton)
     drc_fit = vectoriseNamedTuple(drc_copy)
-    parameters  = [getindex.(Ref(cmt_vec[1].parameters), [:s_infant,:s_vax]) for cmt_vec in drc_fit]
-    drc_opt=estimateparameters!(drc_fit,pyramids, parameters,sync=[:s_infant,:s_vax,:s_partvax])
+    parameters  = [getindex.(Ref(cmt_vec[1].parameters), estkeys) for cmt_vec in drc_fit]
+    drc_opt=estimateparameters!(drc_fit,pyramids, parameters,bayesian=bayesian,sync=sync)
 
     drc_plot=plot.(dataplots, drc_copy.|>collect; label = ["all contacts" "at home"],legend=(0.1,0.96),ylim=(0,0.4),color = [:royalblue :firebrick],
 title = "synthetic matrix (DRC)")
@@ -115,7 +122,9 @@ function output_sexual_fit(
         estkeys = [Symbol.(["1_" "2_"],"addmat",4:7)|>vec;:addmat_v;:addmat_w],
         load = nothing,
         ascertainment=1,
-        preview = false
+        preview = false,
+        bayesian=false,
+        bcond = [0.1,0.01]
     )
     
     if !isnothing(load)
@@ -125,18 +134,20 @@ function output_sexual_fit(
         zmb_fit = deepcopy(zmb_sexual_skeleton)
         overwriteparameters!.(zmb_fit|>collect,zmb_ref|>collect)
         parameters  = [getindex.(Ref(cmt.parameters), estkeys) for cmt in zmb_fit]
-        @time zmb_opt = estimateparameters!(zmb_fit,pyramid,parameters;modifier! = propmix!)
+        for fit in zmb_fit fit.misc[:bcond] = copy(bcond) end
+        @time zmb_opt = estimateparameters!(zmb_fit,pyramid,parameters;modifier! = propmix!,bayesian=bayesian)
         
         drc_fit = deepcopy(drc_sexual_skeleton)
         overwriteparameters!.(drc_fit|>collect,drc_ref|>collect)
         parameters  = [getindex.(Ref(cmt.parameters), estkeys) for cmt in drc_fit]
-        @time drc_opt = estimateparameters!(drc_fit,pyramid,parameters;modifier! = propmix!)
+        for fit in drc_fit fit.misc[:bcond] = copy(bcond) end
+        @time drc_opt = estimateparameters!(drc_fit,pyramid,parameters;modifier! = propmix!,bayesian=bayesian)
     end
 
-    zmb_plot = plot(dataplots, zmb_fit|>collect; ascertainment=ascertainment,label = ["all contacts" "physical only" "at home" "physical & home"],legend=(0.1,0.96),ylim=(0,0.3), color = [1 1 2 2],linestyle = [:solid :dash],
+    zmb_plot = plot(dataplots, zmb_fit|>collect; ascertainment=ascertainment,label = ["all contacts" "physical only" "at home" "physical & home"].*" + sexual",legend=(0.1,0.96),ylim=(0,0.3), color = [1 1 2 2],linestyle = [:solid :dash],
     title = "empirical matrix (Zimbabwe)")
 
-    drc_plot=plot(dataplots, drc_fit|>collect; ascertainment=ascertainment, label = ["all contacts" "at home"],legend=(0.1,0.96),ylim=(0,0.3),color = [:royalblue :firebrick],
+    drc_plot=plot(dataplots, drc_fit|>collect; ascertainment=ascertainment, label = ["all contacts" "at home"].*" + sexual",legend=(0.1,0.96),ylim=(0,0.3),color = [:royalblue :firebrick],
 title = "synthetic matrix (DRC)")
     
     if preview 
@@ -157,7 +168,8 @@ function output_sexual_fit(
         load = nothing,
         ascertainment=1,
         preview = false,
-        sync=true
+        sync=true,
+        bcond = [0.1,0.01]
     )
 
     if !isnothing(load)
@@ -168,7 +180,10 @@ function output_sexual_fit(
         zmb_copy = deepcopy.(zmb_sexual_skeleton)
         zmb_fit = vectoriseNamedTuple(zmb_copy)
         
-        for (fit, ref) in zip(zmb_fit,zmb_ref) overwriteparameters!.(fit, ref) end
+        for (fit, ref) in zip(zmb_fit,zmb_ref) 
+            overwriteparameters!.(fit, ref)
+            fit.misc[:bcond] = copy(bcond)
+        end
         
         parameters  = [
             reduce(vcat,[convert(Vector{Scalar}, getindex.(Ref(cmt_vec[x].parameters), x == 1 ? estkeys : setdiff(estkeys,sync))) for x in 1:length(cmt_vec)])
@@ -179,7 +194,10 @@ function output_sexual_fit(
         drc_copy = deepcopy.(drc_sexual_skeleton)
         drc_fit = vectoriseNamedTuple(drc_copy)
         
-        for (fit, ref) in zip(drc_fit,drc_ref) overwriteparameters!.(fit, ref) end
+        for (fit, ref) in zip(drc_fit,drc_ref) 
+            overwriteparameters!.(fit, ref)
+            fit.misc[:bcond] = copy(bcond)
+        end
 
         parameters  = [
             reduce(vcat,[convert(Vector{Scalar},getindex.(Ref(cmt_vec[x].parameters), x == 1 ? estkeys : setdiff(estkeys,sync))) for x in 1:length(cmt_vec)])
@@ -208,30 +226,48 @@ function output_validate(
         drc_skeleton,
         drc_ref,
         dataplots,
-        preview = false
+        preview = false,
+        bayesian=false
         )
 
     zmb_fit = deepcopy(zmb_skeleton)
     overwriteparameters!.(zmb_fit|>collect, zmb_ref|>collect)
     @show likelihood.(pyramid,zmb_fit|>collect)
-    for cmt in zmb_fit
+    if bayesian
+        ess = getfield.(getindex.(getfield.(zmb_ref|>collect,:misc),:opt),:ess)
+        lls_zmb = MCMCiterate.(cm->likelihood(pyramid,cm),zmb_fit|>collect,zmb_ref|>collect.|>chainof)
+        @show (mean.(lls_zmb),std.(lls_zmb)./(ess.-1)) # likelihood loss
+        vcases = vcat(pyramid.cases...)
+        @show (mean.(lls_zmb).-logpdf(Multinomial(sum(vcases),vcases./sum(vcases)),vcases))./sum(vcases) # KLD
+    end
+    zmb_fit = deepcopy(zmb_skeleton)
+    overwriteparameters!.(zmb_fit|>collect, zmb_ref|>collect)
+    """for cmt in zmb_fit
         if :opt in keys(cmt.misc)
             opt = cmt.misc[:opt]
             cmt.misc[:opt]=(minimizer = opt.minimizer, minimum = -likelihood(pyramid,cmt),  hessian = opt.hessian,result=opt.result)
         end
-    end
+    end"""
     zmb_plot = plot(dataplots, zmb_fit|>collect; label = ["all contacts" "physical only" "at home" "physical & home"],legend=(0.1,0.96),ylim=(0,0.4), color = [1 1 2 2],linestyle = [:solid :dash],
     title = "empirical matrix (Zimbabwe)")
     
     drc_fit = deepcopy(drc_skeleton)
     overwriteparameters!.(drc_fit|>collect, drc_ref|>collect)
     @show likelihood.(pyramid,drc_fit|>collect)
-    for cmt in drc_fit
+    if bayesian
+        ess = getfield.(getindex.(getfield.(drc_ref|>collect,:misc),:opt),:ess)
+        lls_drc = MCMCiterate.(cm->likelihood(pyramid,cm),drc_fit|>collect,drc_ref|>collect.|>chainof)
+        @show (mean.(lls_drc),std.(lls_drc)./(ess.-1))
+        @show (mean.(lls_drc).-logpdf(Multinomial(sum(vcases),vcases./sum(vcases)),vcases))./sum(vcases)
+    end    
+    drc_fit = deepcopy(drc_skeleton)
+    overwriteparameters!.(drc_fit|>collect, drc_ref|>collect)
+    """for cmt in drc_fit
         if :opt in keys(cmt.misc)
             opt = cmt.misc[:opt]
             cmt.misc[:opt]=(minimizer = opt.minimizer, minimum = -likelihood(pyramid,cmt),  hessian = opt.hessian,result=opt.result)
         end
-    end
+    end"""
     
     drc_plot=plot(dataplots, drc_fit|>collect; label = ["all contacts" "at home"],legend=(0.1,0.96),ylim=(0,0.4),color = [:royalblue :firebrick],
 title = "synthetic matrix (DRC)")
@@ -239,7 +275,9 @@ title = "synthetic matrix (DRC)")
         zmb_plot|>display
         drc_plot|>display
     end
-   (zmb_fit=zmb_fit,zmb_plot=zmb_plot,drc_fit=drc_fit,drc_plot=drc_plot)
+   if bayesian return (zmb_fit=zmb_fit,zmb_plot=zmb_plot,drc_fit=drc_fit,drc_plot=drc_plot,lls_zmb,lls_drc)
+    else return (zmb_fit=zmb_fit,zmb_plot=zmb_plot,drc_fit=drc_fit,drc_plot=drc_plot)
+    end
 end
 
 # summarise results
@@ -254,11 +292,28 @@ function parameterestimates(fit)
         end for cmt in fit] 
     (parnames=parnames, estimates = first.(res), min_se = getindex.(res,2),ll = last.(res))
 end
-function CI(fit)
+function CI(fit) # for MLE
     est = parameterestimates(fit)
     (CI=[[min_se min_se[:,1].+min_se[:,2].*[-1.96 1.96]] for min_se in est.min_se], ll=est.ll)
 end
 
+function CrI(fit) # for MCMC
+    [describe(cmt.misc[:opt].chain)[2][:,[Symbol("50.0%"),Symbol("2.5%"),Symbol("97.5%")]] for cmt in fit]
+end
+function posteriordist(cm::ContactMatrix,colid)
+    MixtureModel(Normal.((chainof(cm)|>Array)[:,colid],0))
+end
+function posteriordist(v::AbstractVector)
+    MixtureModel(Normal.(v,0))
+end
+function posteriorjointdist(cm::ContactMatrix)
+    postarray = chainof(cm)|>Array
+    ngmat = ngm(cm)
+    eigval0= eigvals(ngmat[2:2:4,2:2:4]|>collapseblockmat)[end]|>Real
+    postarray[:,9:10]./=eigval0
+    MixtureModel(MvNormal.(postarray|>eachrow,0))
+end
+    
 function eigenanalysis(fit)
     res=[begin
             ngmat = ngm(cmt)
@@ -269,6 +324,18 @@ function eigenanalysis(fit)
         end for cmt in fit]
     (eigcases = first.(res), eigval0=last.(res), eigval = dominanteigval.(fit|>collect),ngm=getindex.(res,2))
 end
+
+function b_eigenanalysis(fit)
+    res=[begin
+            ngmat = ngm(cmt)
+            eigvec = groupsplit(eigvecs(collapseblockmat(ngmat))[:,end].|>Real,4)
+            eigcases = (ngmat*eigvec)./sum(sum.(ngmat*eigvec))
+            eigval0= eigvals(ngmat[2:2:4,2:2:4]|>collapseblockmat)[end]|>Real
+           (eigcases, ngmat, eigval0)
+        end for cmt in fit]
+    (eigcases = first.(res), eigval0=last.(res), eigval = MCMCiterate.(Ref(dominanteigval),fit|>collect),ngm=getindex.(res,2))
+end
+
 function vaccineRmap(cmt, R0adjfactor; targetidx = 5:6, R0baseline = 0.82, ve = 0.86, poprange = (0:0.25:50)./100, fswrange = (0:0.5:100)./100)
        addmat_w = cmt.parameters[:addmat_w][]
         addmat5_7 = getindex.(Ref(cmt.parameters),Symbol.("2","_addmat",5:7))
@@ -285,10 +352,4 @@ function vaccineRmap(cmt, R0adjfactor; targetidx = 5:6, R0baseline = 0.82, ve = 
         redmap=(1 .-Rmap./(dominanteigval(cmt)/R0adjfactor*R0baseline))   
         (Rmap=Rmap,redmap=redmap)
 end
-
-savefigname(filename::AbstractString; save = true) = plt->
-begin 
-    @suppress if save savefig(plt,filename)|>display end
-    @suppress display(plt)
-end 
     

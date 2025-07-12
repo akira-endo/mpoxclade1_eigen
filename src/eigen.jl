@@ -1,6 +1,8 @@
 ENV["TMPDIR"] = "/tmp"
 using LinearAlgebra
 using Countries
+using CSV
+using DataFrames
 using Distributions
 using Plots
 using RCall
@@ -10,6 +12,13 @@ using JSON3
 using Optim
 using FiniteDiff
 using Printf
+using Turing
+using AdvancedHMC
+using Random
+using LogDensityProblemsAD
+using LogDensityProblems
+using FiniteDifferences
+using Retry
 
 @rimport socialmixr as smr
 @rimport base as r
@@ -56,8 +65,10 @@ ContactMatrix(m::Vector,a,s,p,am,mi)=ContactMatrix(m[:,:],a,s,p,am,mi)
 ContactMatrix(m,a,s,p,am::Vector,mi)=ContactMatrix(m,a,s,p,am[:,:],mi)
 ContactMatrix(m::Vector,a,s,p,am::Vector,mi)=ContactMatrix(m[:,:],a,s,p,am[:,:],mi)
 Base.length(cm::ContactMatrix)=1
-Base.iterate(cm::ContactMatrix) = (p, nothing)
-Base.iterate(cm::ContactMatrix) = nothing
+Base.iterate(cm::ContactMatrix,p) = nothing
+Base.iterate(cm::ContactMatrix) = (cm, nothing)
+#Base.iterate(cm::ContactMatrix,p) = (p, nothing)
+#Base.iterate(cm::ContactMatrix) = nothing
 
 ## functions
 include("../src/utils.jl")
@@ -84,17 +95,31 @@ end
 makeagegrouplabel(p::Pyramid)=makeagegrouplabel(p.ageinterval)
 
 # contact matrices
-function contactmatrix(surveyname::Symbol, ageinterval::AbstractVector, countries = nothing, filter = nothing, sus_func = x->one(0.))
-    cmt = socialmixr_eig(surveyname, ageinterval, countries,filter)
-    ContactMatrix([cmt.matrix], ageinterval, convert(Vector{Vector{Union{Scalar,Float64}}},[map.(sus_func,ageinterval)]),PDict(),[zero(cmt.matrix)],Dict{Symbol,Any}(:issynthetic=>false))
+function partvax_cov(countrycode, year, cessation = 1980)
+    unvax_age = year-cessation
+    vaxageint = [0,unvax_age÷10*10,unvax_age+1,(unvax_age÷10+1)*10]
+    popsize(vaxageint,countrycode=string(countrycode),year=year)[2:3]|>Base.Fix2(normalize,1)|>last
 end
-function contactmatrix(syntheticdata::AbstractDict, ageinterval::AbstractVector, countrycode_s, sus_func = x->one(0.);year=2024)
-    cmt = synthetic_eig(syntheticdata, ageinterval, countrycode_s;year=year)
-    ContactMatrix([cmt.matrix], ageinterval, convert(Vector{Vector{Union{Scalar,Float64}}},[map.(sus_func,ageinterval)]),PDict(),[zero(cmt.matrix)],Dict{Symbol,Any}(:issynthetic=>true)) # temporary fix of (0:15).*5 in place of ageintervel
+function contactmatrix(surveyname::Symbol, ageinterval::AbstractVector, countries = nothing, filter = nothing, sus_func = x->one(0.);year, refyear = 2013, refcountrycode="ZWE")
+    partcov=partvax_cov(countries, year)
+    demogchange = popsize(ageinterval, countrycode=countries, year = year)./popsize(ageinterval,countrycode=refcountrycode,year=refyear)
+    if refcountrycode=="MAN" refcountrycode = "ZWE" end
+    cmt = socialmixr_eig(surveyname, ageinterval, get_country(refcountrycode).name,filter;susceptibility=demogchange)
+    ContactMatrix([cmt.matrix], ageinterval, convert(Vector{Vector{Union{Scalar,Float64}}},[map.(sus_func,ageinterval)]),PDict(),[zero(cmt.matrix)],Dict{Symbol,Any}(:issynthetic=>false,:partcov=>partcov))
+end
+function contactmatrix(syntheticdata::AbstractDict, ageinterval::AbstractVector, countrycode_s, sus_func = x->one(0.);year=2024,refyear = 2020)
+    partcov=partvax_cov(countrycode_s, year)
+    refcountry = countrycode_s
+    if countrycode_s==:BDIC refcountry = :BDI end
+    demogchange = popsize(ageinterval,countrycode=string(countrycode_s),year=year)./popsize(ageinterval,countrycode=string(refcountry),year=refyear)
+    if countrycode_s==:BDIC countrycode_s = :BDI end
+    cmt = synthetic_eig(syntheticdata, ageinterval, countrycode_s;year=year,susceptibility=demogchange)
+    ContactMatrix([cmt.matrix], ageinterval, convert(Vector{Vector{Union{Scalar,Float64}}},[map.(sus_func,ageinterval)]),PDict(),[zero(cmt.matrix)],Dict{Symbol,Any}(:issynthetic=>true,:partcov=>partcov))
 end
 
-contactmatrix(surveyname::Symbol, p::Pyramid, countries = nothing, filter = nothing, sus_func = x->one(0.))= contactmatrix(surveyname, p.ageinterval, countries, filter, sus_func)
-contactmatrix(syntheticdata::AbstractDict, p::Pyramid, countrycode_s, sus_func = x->one(0.);year=2024)= contactmatrix(syntheticdata, p.ageinterval, countrycode_s, sus_func;year=year)
+contactmatrix(surveyname::Symbol, p::Pyramid, countries = nothing, filter = nothing, sus_func = x->one(0.);year,refyear = 2013, refcountrycode="ZWE")= contactmatrix(surveyname, p.ageinterval, countries, filter, sus_func;year=year,refyear = refyear, refcountrycode=refcountrycode)
+
+contactmatrix(syntheticdata::AbstractDict, p::Pyramid, countrycode_s, sus_func = x->one(0.);year=2024,refyear=2020)= contactmatrix(syntheticdata, p.ageinterval, countrycode_s, sus_func;year=year,refyear=refyear)
 
 function Base.:+(c1::ContactMatrix, m::AbstractArray)
     if iszero(c1.addmat) ContactMatrix(c1.matrix,c1.ageinterval,c1.susceptibility,c1.parameters,m,c1.misc)
@@ -119,10 +144,16 @@ function Base.hcat(cm1::ContactMatrix, cm2::ContactMatrix)
 end
 
 # contact matrix data
-popsize(ageinterval; countryname=countryname, year = year) = @suppress(rcopy(smr.pop_age(smr.wpp_age(countryname, 2024),ageinterval.|>Int)).population|>Base.Fix2(normalize,1))
+wpp2024=CSV.read("../data/wpp2024/populationdata.csv",DataFrame)[:,[:Location,:Iso3,:AgeStart,:Time,:Value]]
+rename!(wpp2024,:Value=>:population,:AgeStart=>Symbol("lower.age.limit"))
+function popsize(ageinterval; countrycode, year,data=wpp2024) 
+fildata = filter(:Time=>==(year),filter(:Iso3=>==(countrycode),data))
+rcopy(smr.pop_age(fildata, ageinterval.|>Int)).population|>Base.Fix2(normalize,1)
+end
 
-function socialmixr_eig(surveyname, ageinterval, countries = nothing, filter=nothing, susceptibility = 1, addmat = zeros(fill(size(ageinterval)[1],2)...))
-    smixr = @suppress( rcopy(r.suppressWarnings(smr.contact_matrix(surveyname, countries = countries, var"age.limits" = ageinterval, filter = filter,symmetric=true,var"return.demography"=true,var"estimated.contact.age"="mean"))) )
+
+function socialmixr_eig(surveyname, ageinterval, countries = nothing, filter=nothing; susceptibility = 1, addmat = zeros(fill(size(ageinterval)[1],2)...))
+    smixr = @suppress( rcopy(r.suppressWarnings(smr.contact_matrix(surveyname, countries = countries, var"age.limits" = ageinterval, filter = filter,symmetric=true,var"return.demography"=true,var"estimated.contact.age"="sample"))) )
     cmt = smixr[:matrix]
     if countries=="Zimbabwe" cmt./=2 end # as Zimbabwe contact matrix contain two days of contacts per participant
     cmt .+= addmat
@@ -133,16 +164,16 @@ function socialmixr_eig(surveyname, ageinterval, countries = nothing, filter=not
 end
 
 
-function synthetic_eig(contactdata, ageinterval, countrycodes::AbstractArray, susceptibility = 1;year=2024)
+function synthetic_eig(contactdata, ageinterval, countrycodes::AbstractArray;susceptibility = 1,year=2024)
     out = synthetic_eig.(Ref(contactdata),Ref(ageinterval),countrycodes,Ref(susceptibility);year=year)
     (countrycode = getfield.(out,:countrycode), eigval = getfield.(out,:eigval), eigvec = getfield.(out,:eigvec), matrix = getfield.(out,:matrix))
 end
-function synthetic_eig(contactdata, ageinterval, countrycode::Symbol, susceptibility = 1;year=2024)
+function synthetic_eig(contactdata, ageinterval, countrycode::Symbol; susceptibility = 1,year=2024)
     cmt = contactdata[countrycode]
     # merge contact matrix using {hhh4contacts}
     @rput cmt
     R"library(hhh4contacts); rownames(cmt)<-0:15*5"
-    pop = popsize((0:15).*5,countryname=get_country(string(countrycode)).name,year=year)
+    pop = popsize((0:15).*5,countrycode=string(countrycode),year=year)
     @rput pop
     groupmap = (;(Symbol.([@sprintf("%02d",a) for a in ageinterval]).=>[string.(x) for x in collect.(range.(ageinterval,[ageinterval[2:end];76].-1,step=5))])...)
     @rput groupmap
@@ -152,12 +183,13 @@ function synthetic_eig(contactdata, ageinterval, countrycode::Symbol, susceptibi
     ev = abs.(normalize(eigvecs(cmt')[:,end],1))
     (countrycode=countrycode,eigval = ρ, eigvec = ev, matrix = cmt)
 end
-function synthetic_eig(contactdata, ageinterval, countrycode::Nothing, susceptibility = 1;year=2024)
+function synthetic_eig(contactdata, ageinterval, countrycode::Nothing; susceptibility = 1,year=2024)
     synthetic_eig(contactdata, ageinterval, keys(contactdata)|>collect, susceptibility;year=year)
 end
 
 # next generation matrix
-function ngm(cm::ContactMatrix, R0 = nothing) 
+function ngm(cm::ContactMatrix, R0 = nothing)
+    if haskey(cm.parameters,:s_partvax) cm.parameters[:s_partvax] .= 1-(1-cm.parameters[:s_vax][])*cm.misc[:partcov] end # set partvax
     cmt = broadcast.(*,cm.susceptibility', broadcast.(+,cm.matrix, cm.addmat))
     if !isnothing(R0) cmt./=dominanteigval(cm) end
     cmt|>transpose
@@ -188,6 +220,7 @@ struct NLL
     cm::ContactMatrix
     mutateparameters::Vector{Scalar}
     modifier! ::Function
+    penalty::Float64
 end
 
 struct NLLs{P<:Pyramid,C<:ContactMatrix}
@@ -195,52 +228,239 @@ struct NLLs{P<:Pyramid,C<:ContactMatrix}
     cm::Vector{C}
     mutateparameters::Vector{Scalar}
     modifier! ::Function
+    penalty::Float64
     sync::Vector{Symbol}
 end
-
+voidmodifier(x...)=0.
 function (nll::NLL)(x)
         for (parameter, el) in zip(nll.mutateparameters,x) parameter.=el end
-        nll.cm.parameters[:s_partvax] .= (1+nll.cm.parameters[:s_vax][])/2 # effectiveness among partvax to be half s_vax
-        modifier_ll = nll.modifier!(nll.p, nll.cm)
+        modifier_ll = nll.modifier!(nll.p, nll.cm) * nll.penalty
         -likelihood(nll.p,nll.cm)-modifier_ll
 end
 function (nlls::NLLs)(x)
         for (parameter, el) in zip(nlls.mutateparameters,x) parameter.=el end
-        first(nlls.cm).parameters[:s_partvax] .= (1+first(nlls.cm).parameters[:s_vax][])/2 # effectiveness among partvax to be half s_vax
-        modifier_ll = mean(nlls.modifier!.(nlls.p, nlls.cm))
+        modifier_ll = mean(nlls.modifier!.(nlls.p, nlls.cm)) * nlls.penalty
         if !(isempty(nlls.sync)) for i in 1:length(nlls.cm)-1 overwriteparameters!(nlls.cm[i+1], nlls.cm[i],nlls.sync) end end # assume cm is in growing order in terms of # parameters
         -sum(likelihood.(nlls.p,nlls.cm))-modifier_ll
 end
 
-function optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMatrix; sync=false,modifier!::Function = (x...)->0.) # sync is only placeholder in this method
-    nll=NLL(p,cm,mutateparameters,modifier!)
-    @time opt = optimize(nll, zeros(length(mutateparameters)).+1e-6,fill(500.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()),Optim.Options(g_tol=1e-5, x_tol=1e-6))
+function optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMatrix; sync=false,modifier!::Function = voidmodifier) # sync is only placeholder in this method
+    nll=NLL(p,cm,mutateparameters,modifier!, 10000.)
+    opt = optimize(nll, zeros(length(mutateparameters)).+1e-6,fill(500.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()),Optim.Options(g_tol=1e-5, x_tol=1e-8))
     hess = FiniteDiff.finite_difference_hessian(nll,opt.minimizer)
     nll(opt.minimizer)
-    (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess ,result=opt)
+    (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess ,result=opt,nll=nll)
 end
 
-function optimise!(mutateparameters::Vector{Scalar}, p::AbstractArray{<:Pyramid}, cm::AbstractArray{<:ContactMatrix}; sync = Symbol[], modifier!::Function = (x...)->0.)
-    nlls=NLLs(p,cm,mutateparameters,modifier!,sync)
-    @time opt = optimize(nlls, zeros(length(mutateparameters)).+1e-6,fill(100.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()), Optim.Options(g_tol=1e-5, x_tol=1e-6, time_limit=1800.))
+function optimise!(mutateparameters::Vector{Scalar}, p::AbstractArray{<:Pyramid}, cm::AbstractArray{<:ContactMatrix}; sync = Symbol[], modifier!::Function = voidmodifier)
+    nlls=NLLs(p,cm,mutateparameters,modifier!,10000.,sync)
+    opt = optimize(nlls, zeros(length(mutateparameters)).+1e-6,fill(100.,length(mutateparameters)),getindex.(mutateparameters),Fminbox(LBFGS()), Optim.Options(g_tol=1e-5, x_tol=1e-8, time_limit=1800.))
     hess = FiniteDiff.finite_difference_hessian(nlls,opt.minimizer)
     nlls(opt.minimizer)#for (parameter, el) in zip(mutateparameters,opt.minimizer) parameter.=el end
-    (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess,result=opt)
+    (minimizer = opt.minimizer, minimum = opt.minimum,  hessian = hess,result=opt,nll=nlls)
+end
+
+## optimise! using MCMC
+function b_optimise!(mutateparameters::Vector{Scalar}, p::Pyramid, cm::ContactMatrix; sync=false,modifier!::Function = voidmodifier) # sync is only placeholder in this method
+    opt = optimise!(mutateparameters, p, cm; sync=sync,modifier! = modifier!)
+    init = opt.minimizer
+    hess = opt.hessian
+    nll=NLL(p,cm,mutateparameters,modifier!,10000.)
+
+    if applicable(modifier!,nothing) # i.e. if modifier was not set
+        println("method: importance sampling resampling")
+        return runISR(nll, init, inv(hess), 2000)
+    else
+        println("method: No-U-turn sapler")
+        return runmcmc(nll,init, 2000, 500)
+    end
+end
+function b_optimise!(mutateparameters::Vector{Scalar}, p::AbstractArray{<:Pyramid}, cm::AbstractArray{<:ContactMatrix}; sync = Symbol[], modifier!::Function = voidmodifier)
+    opt = optimise!(mutateparameters, p, cm; sync = sync, modifier! = modifier!)
+    init = opt.minimizer
+    hess = opt.hessian
+    nlls=NLLs(p,cm,mutateparameters,modifier!,10000.,sync)
+    if  applicable(modifier!,nothing) # i.e. if modifier was not set
+        println("method: importance sampling resampling")
+        return runISR(nlls, init, inv(hess), 2000)
+    else
+        println("method: No-U-turn sapler")
+        return runmcmc(nlls,init, 2000, 500)
+    end
+end
+function runISR(nll, init, Σ, n_samples = 1000; propdist=MvNormal(init, Σ), transform! = identity)
+    props = rand(propdist,max(10n_samples,10000))|>eachcol
+    lpprops = logpdf.(Ref(propdist), props)
+    transform!(props)
+    if length(init)>3 # if sexual contact included
+        tr_props=(begin prop = collect(r); prop[1:8].=sqrt.(2 .*prop[1:8]).+1 end for r in props)
+        ld = .-nll.(tr_props)
+    else
+        ld = .-nll.(props)
+    end
+    lw = ld.-lpprops
+    w = pweights(normalize(exp.(lw.-maximum(lw)),1))
+    res = sample(props, w, n_samples, replace = true)
+    chain = setinfo(Chains(res), (logdensity=ld,))
+    med = quantile(chain,q=[0.5]).nt[2]
+    nll(med) # update contact matrix via nll
+    (med = med, ld = ld, chain=chain, nll=nll, ess_pre = sum(w)^2/sum(w.^2),ess = 10n_samples-sum((1 .-w).^n_samples),lpprops=lpprops)
+end
+function runmcmc(nll, init, n_samples = 1000, n_adapts = 500)
+    @model function poistrick(x=0, nll_input = nll, len = length(nll.mutateparameters))
+        lpar ~ filldist(Normal(0,5),8)
+        lvw ~ filldist(Normal(0,2),len-8)
+        transpar = sqrt.(2exp.(lpar)).+1
+        x~Poisson(nll_input([transpar;exp.(lvw)]))
+        Turing.@addlogprob! sum(lpar)+sum(lvw)
+        return exp.([lpar;lvw])
+    end
+    lp = LogDensityFunction(poistrick())
+    model = AdvancedHMC.LogDensityModel(
+            LogDensityProblemsAD.ADgradient(Val(:FiniteDifferences), lp,;fdm=FiniteDifferences.forward_fdm(2,1))
+    )
+    # run MCMC. Retry if stopped due to hitting NaN
+    seedint = 1#isempty(serial[1]) ? 1 : pop!(serial[1])
+    AHMCchain=nothing
+    @repeat 20 try
+        Random.seed!(seedint)
+        AHMCchain = AbstractMCMC.sample(
+            model,
+            AdvancedHMC.NUTS(0.8),
+            n_samples+n_adapts;
+            n_adapts = n_adapts,
+            initial_params = [log.((init[1:8].-1).^2 ./2);log.(init[9:end])].+0.01,
+        )
+    catch e
+        @retry if typeof(e) == ArgumentError seedint+=1 end
+    end
+    #push!(serial[2], seedint)
+    ## post processing
+    transθ = getfield.(getfield.(AHMCchain,:z),:θ)[n_adapts.+(1:n_samples)]
+    len = transθ|>first|>length
+    par, vw = broadcast.(exp,getindex.(transθ, Ref(1:8))), broadcast.(exp,getindex.(transθ, Ref(9:len)))
+
+    # rescale par to meet boundary conditions
+    na = convert(Vector{Float64},nll.cm.misc[:pop])./2
+    denomweights=Ref(na[4:7])./([sum(na[4:7]),1].*nll.cm.misc[:bcond])
+    pa = ((@view el[1:(8)÷2]) for el in par)
+    qa = ((@view el[(8)÷2+1:end]) for el in par)
+    for (p,q) in zip(pa,qa)
+        p./= sum(denomweights[1].* p)
+        q./= sum(denomweights[2].* q)
+    end
+
+    ld = getfield.(getfield.(getfield.(AHMCchain,:z),:ℓπ),:value)[end-n_samples+1:end]
+    chain = setinfo(Chains(vcat.(par,vw)), (logdensity=ld,))
+    med = quantile(chain,q=[0.5]).nt[2]
+    LogDensityProblems.logdensity(lp, log.(med)) # update contact matrix via nll
+    (med = med, ld = ld, chain=chain,nll=nll)
 end
 
 
-function estimateparameters!(cms, p::Union{Pyramid,AbstractArray{<:Pyramid}}, parameters;sync=false,modifier!::Function = (x...)->0.)
-    [begin
+
+
+function estimateparameters!(cms, p::Union{Pyramid,AbstractArray{<:Pyramid}}, parameters;sync=false,modifier!::Function = voidmodifier, bayesian=false)
+    res = Vector{Any}(undef, length(cms))
+    if length(cms)>2
+    for i in 1:length(cms)
+        (cmt, parms)= (zip(cms, parameters)|>collect)[i]
         firstel = typeof(cmt) <: ContactMatrix ? cmt : first(cmt) # if cmt is an array of ContactMatrix take the first
-    opt = optimise!(parms, p, cmt,sync=sync,modifier! = modifier!)
-    firstel.misc[:opt] = opt
-        end for (cmt, parms) in zip(cms, parameters)]
+    opt = !bayesian ? optimise!(parms, p, cmt,sync=sync,modifier! = modifier!) : b_optimise!(parms, p, cmt,sync=sync,modifier! = modifier!)
+    for el in cmt el.misc[:opt] = opt end
+        res[i]=opt
+        end
+    else
+        #bayesian=false
+        for i in 1:length(cms)
+        (cmt, parms)= (zip(cms, parameters)|>collect)[i]
+        firstel = typeof(cmt) <: ContactMatrix ? cmt : first(cmt) # if cmt is an array of ContactMatrix take the first
+    opt = !bayesian ? optimise!(parms, p, cmt,sync=sync,modifier! = modifier!) : b_optimise!(parms, p, cmt,sync=sync,modifier! = modifier!)
+        for el in cmt el.misc[:opt] = opt end
+            res[i]=opt
+        end
+    end
+    res
 end
 
 function overwriteparameters!(c1::ContactMatrix,c2::ContactMatrix, parnames = true) # all if true, vector of parameter names to only ovewrwrite specific parameters
     for key in intersect(keys(c1.parameters),keys(c2.parameters), parnames == true ? keys(c1.parameters) : parnames)
         c1.parameters[key].=c2.parameters[key]
     end
+end
+
+## Handling MCMC chain
+chainof(cm::ContactMatrix)=cm.misc[:opt].chain
+chainof(cm::AbstractVector{<:ContactMatrix})=cm[1].misc[:opt].chain
+ldof(cm::ContactMatrix)=cm.misc[:opt].ld
+function MCMCiterate(f::Function, cm::ContactMatrix, chain::Chains=chainof(cm))
+    if haskey(cm.misc,:opt) med=copy(cm.misc[:opt].med) end
+    len=size(chain)[2]
+    out = [begin
+            parv=collect(parvec)
+            if len>=10 parv[1:8].=sqrt.(2parv[1:8]).+1 end
+            cm.misc[:opt].nll(parv) # update cm with MCMC slice
+            f(cm)
+    end for parvec in (chain|>Array|>eachrow)]
+    
+    if len>=10 med[1:8].=sqrt.(2med[1:8]).+1 end
+    cm.misc[:opt].nll(med) # revert cm to median estimates
+    out
+end
+
+function pwlikelihood(cm)
+    p = cm.misc[:opt].nll.p
+    ps = (Pyramid(cases,p.casecategories,p.ageinterval,p.graphlabel,p.misc) for cases in onehot_vov(p.cases))
+    likelihood.(ps,Ref(cm))
+end
+    
+function waic(cm::ContactMatrix, opt=cm.misc[:opt])
+    #replace opt
+    opt0 = cm.misc[:opt]
+    cm.misc[:opt]=opt
+    
+    nll = cm.misc[:opt].nll
+    casevec=vcat(nll.p.cases...)
+    pwl = MCMCiterate(pwlikelihood,cm)
+    mcmclen=length(pwl)
+    pwlmat = reduce(hcat,pwl)'
+    waic_k = [-2*(Turing.logsumexp(col) - log(mcmclen) - var(col)) for col in eachcol(pwlmat)]
+    waic = sum(waic_k,Weights(casevec)) - 2*(Turing.logfactorial(sum(casevec))-sum(Turing.logfactorial.(casevec))) # 2nd term: factorials in mutlnomial pdf
+    se_k = [-2√(var(LogNormal(0,std(col)))/mcmclen  + 2var(col)^2/(mcmclen-1)) for col in eachcol(pwlmat)]
+    se_waic = √sum(se_k.^2,Weights(casevec)) #2sqrt(sum([var(col,corrected=false) for col in eachcol(pwlmat)],Weights(casevec)))
+    cm.misc[:opt]=opt0 # restore opt
+    (waic, se_waic)
+end
+include("../src/UniformSphere.jl")
+function propagateISR(cm::ContactMatrix, nsamples = 10000, opt=cm.misc[:opt])
+    nll = opt.nll
+    len = opt.chain|>length
+    ld=opt.ld[end-(len-1):end]
+    postarray = opt.chain|>Array.|>log
+    postarray[:,9:10].= [mean(postarray[:,9:10],dims=2) diff(postarray[:,9:10],dims=2)]
+    Σ = diagm(var(postarray,dims=1)|>vec)#cov(postarray)
+    init = vec(mean(postarray,dims=1))
+
+    # adaptive kernel size
+    β = 1 / (length(init) + 4)
+    c_i = (-2β/2).*((ld.-mean(ld)) .+ log(len)) .|>exp #sqrt of optimal kernel size as a heuristic
+    
+    function transform!(erow)
+        for r in erow
+            r[9:10].=[r[9]-r[10]/2,r[9]+r[10]/2]
+            r.=exp.(r)
+        end
+    end
+    propdist = MixtureModel(UniformSpheres.UniformSphere.(eachrow(postarray),Ref(Σ).*c_i.*1.78./100))
+    runISR(nll, init, Σ, nsamples; propdist = propdist, transform! = transform!)
+end
+function waicISR(cm::ContactMatrix,propagate=1)
+    opt = cm.misc[:opt]
+    opt=propagateISR(cm, length(opt.chain)*propagate,opt)
+    #for _ in 1:propagate
+    #    opt = propagateISR(cm, length(opt.chain)*10,opt)
+    #end
+    (waic(cm,opt),opt)
 end
 
 
