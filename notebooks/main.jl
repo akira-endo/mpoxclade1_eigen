@@ -276,14 +276,14 @@ quantile.(frac_R0,Ref([0.025,0.5,0.975]))|>display
 
 # fraction of R0 attributable to sexual transmisssion: Synthetic matrix
 module Synthetic_R0
-using Main: b_eigenanalysis, MixtureModel, Normal, pweights
+using Main: b_eigenanalysis, MixtureModel, Normal, pweights, quantile
 eig_kamituga=b_eigenanalysis(Main.kamituga2024_fit.drc_fit)
 eig_kivu=b_eigenanalysis(Main.kivu2024_fit.drc_fit)
 eig_otherhz=b_eigenanalysis(Main.otherhz2024_fit.drc_fit)
 eig_burundi=b_eigenanalysis(Main.burundi2024_fit.drc_fit);
 frac_R0_samples =[ (broadcast.(-,1, broadcast.(/,eig.eigval0, eig.eigval))) for eig in [eig_kivu, eig_kamituga, eig_otherhz, eig_burundi]]
 frac_R0 = [MixtureModel([MixtureModel(Main.Normal.(post,0)) for post in loc],pweights([0,1])) for loc in frac_R0_samples]
-Main.quantile.(frac_R0,Ref([0.025,0.5,0.975]))|>display
+quantile.(frac_R0,Ref([0.025,0.5,0.975]))|>display
 end
 
 # +
