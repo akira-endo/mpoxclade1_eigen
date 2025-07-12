@@ -22,8 +22,6 @@ include("../src/eigen.jl")
 include("../src/eigen_setup.jl")
 include("../src/eigen_output.jl")
 
-const serial=(Int[],Int[])
-
 # +
 # write data
 # include("../src/data.jl");
@@ -44,7 +42,8 @@ tshuapa2015_fit = output_fit(
     zmb_skeleton = zmb2015,
     drc_skeleton = drc2015,
     dataplots = tshuapaplot,
-    bayesian=true);
+    bayesian=true
+    );
 zmb2015_fit = tshuapa2015_fit.zmb_fit;
 
 # Fit to 2024 data in DRC (only required for validation in the next cell)
@@ -76,7 +75,8 @@ endemic2015_24_fit = output_fit(
     zmb_skeleton = [zmb2015,zmb2024],
     drc_skeleton = [drc2015,drc2024],
     dataplots = [tshuapaplot,endemicplot],
-    bayesian=true);
+    bayesian=true
+    );
 zmb2015_24_fit = endemic2015_24_fit.zmb_fit
 drc2015_24_fit = endemic2015_24_fit.drc_fit;
 
@@ -275,13 +275,15 @@ quantile.(frac_R0,Ref([0.025,0.5,0.975]))|>display
 [quantile.(loc.components,Ref([0.025,0.5,0.975])) for loc in frac_R0]
 
 # fraction of R0 attributable to sexual transmisssion: Synthetic matrix
-eig_kamituga=b_eigenanalysis(kamituga2024_fit.drc_fit)
-eig_kivu=b_eigenanalysis(kivu2024_fit.drc_fit)
-eig_otherhz=b_eigenanalysis(otherhz2024_fit.drc_fit)
-eig_burundi=b_eigenanalysis(burundi2024_fit.drc_fit);
+module Synthetic_R0
+eig_kamituga=Main.b_eigenanalysis(Main.kamituga2024_fit.drc_fit)
+eig_kivu=Main.b_eigenanalysis(Main.kivu2024_fit.drc_fit)
+eig_otherhz=Main.b_eigenanalysis(Main.otherhz2024_fit.drc_fit)
+eig_burundi=Main.b_eigenanalysis(Main.burundi2024_fit.drc_fit);
 frac_R0_samples =[ (broadcast.(-,1, broadcast.(/,eig.eigval0, eig.eigval))) for eig in [eig_kivu, eig_kamituga, eig_otherhz, eig_burundi]]
-frac_R0 = [MixtureModel([MixtureModel(Normal.(post,0)) for post in loc],pweights([0,1])) for loc in frac_R0_samples]
-quantile.(frac_R0,Ref([0.025,0.5,0.975]))|>display
+frac_R0 = [Main.MixtureModel([Main.MixtureModel(Main.Normal.(post,0)) for post in loc],Main.pweights([0,1])) for loc in frac_R0_samples]
+Main.quantile.(frac_R0,Ref([0.025,0.5,0.975]))|>display
+end
 
 # +
 # transmission frequency heatmap
@@ -296,16 +298,13 @@ heats=[begin mixingmatrices = (broadcast.(.*,eig.ngm,(eig.eigcases')|>vec).|>sum
 plot(heats[[1,2,5]]...,ticks=(1:8,makeagegrouplabel([0:5:20;30:10:50])),size=(800,650),xrotation=45, 
     xlabel = "age (infector)", title = ["Endemic provinces" "North and South Kivu" "Burundi"], ylabel = ["age (infectee)" "" "age (infectee)"],
     bottom_margin = 2Plots.PlotMeasures.mm) |>savefigname("../figs/fig2/raw/heatmaps.svg", save = false)
-# +
+# -
 # vaccine impact heatmaps
 popvaxrange, fswvaxrange = 0:0.5:100, 0:0.5:100
 kivu2024_project=deepcopy(kivu2024_fit.zmb_fit)
 kivuRmap=vaccineRmap.(kivu2024_project|>collect,eig_endemic.eigval0,ve=0.86,poprange = popvaxrange./100, fswrange = fswvaxrange./100)
 burundi2024_project=deepcopy(burundi2024_fit.zmb_fit)
 burundiRmap=vaccineRmap.(burundi2024_project|>collect,eig_endemic.eigval0,ve=0.86,poprange = popvaxrange./100, fswrange = fswvaxrange./100);
-
-
-# -
 
 hm_kivu = heatmap(fswvaxrange,popvaxrange,mean(kivuRmap.|>first,Ib_weights),clim=(0.5,1.5), xticks = (0:20:100), color=cgrad(:coolwarm, [0.0, 0.5, 0.501, 1],categorical=false))
 contour!(hm_kivu, fswvaxrange,popvaxrange,mean(kivuRmap.|>first,Ib_weights),contour_labels=true, levels = 0.5:0.1:1.5,color=:black)
@@ -395,7 +394,7 @@ plot!((1:8),1 .-cumsum([m_medians; f_medians],dims=2)[:,1:end-1], markershape=:n
 
 labels=string.([15,20,30,40]).*"–".*string.([19,29,39,49]).*[" M" " F"]|>vec|>permutedims
 scatter!(fill(-1,8,8),markershape=:square,ylim=(0,1),color=colors[[1,5],:]|>permutedims|>vec|>permutedims,legend=:outertopright,label=labels,size=(500,300),
-ylabel="proportion",xticks=(1:8,repeat(["N&S Kivu","Kamituga","Other HZ", "Burundi"],2)),xrotation=45,bottom_margin=4Plots.mm,xtickfontsize=9)|>savefigname("../figs/Sfigs/raw/activepop.svg",save=true)
+ylabel="proportion",xticks=(1:8,repeat(["N&S Kivu","Kamituga","Other HZ", "Burundi"],2)),xrotation=45,bottom_margin=4Plots.mm,xtickfontsize=9)|>savefigname("../figs/Sfigs/raw/activepop.svg",save=false)
 # -
 [quantile.(eachrow(postsamples[x][9:10,:]),Ref([0.025,0.5,0.975])) for x in 1:4]
 
