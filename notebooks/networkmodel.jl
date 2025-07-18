@@ -6,7 +6,7 @@
 #       extension: .jl
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.16.6
+#       jupytext_version: 1.17.2
 #   kernelspec:
 #     display_name: Julia Multithreads 1.9.3
 #     language: julia
@@ -23,7 +23,7 @@ gr(fontfamily="Helvetica",foreground_color_legend = nothing,background_color_leg
 # illustration
 Random.seed!(123)
 gsmall1 = union(binet(500, [50,10], 100,0,3),binet(500, [50,50], 0,0.5,3))
-@time gp = graphplot(gsmall,curves=false,markercolor = repeat([1,4],inner=nv(gsmall)÷2),markersize=0.1,size=(450,400)) 
+@time gp = graphplot(gsmall,curves=false,markercolor = repeat([1,4],inner=nv(gsmall)÷2),markersize=0.1,size=(450,400))
 gp|>savefigname("../figs/Sfigs/raw/network1.svg", save=false)
 
 Random.seed!(123)
@@ -117,13 +117,13 @@ approxR0s2 = approxR0.(binets2[1:3]...)
 
 # +
 # save files
-#CSV.write("../data/intermediate/networkmodel_spectrum1.csv",DataFrame((adj = adjR0s1, ngm = approxR0s1, com = cR0s1, adj_e = approxeig1))) 
+#CSV.write("../data/intermediate/networkmodel_spectrum1.csv",DataFrame((adj = adjR0s1, ngm = approxR0s1, com = cR0s1, adj_e = approxeig1)))
 #CSV.write("../data/intermediate/networkmodel_spectrum2.csv",DataFrame((adj = adjR0s2, ngm = approxR0s2, com = cR0s2, adj_e = approxeig2)))
 # -
 
 # read files
-ns1 = CSV.read("../data/intermediate/networkmodel_spectrum1.csv", DataFrame)
-ns2 = CSV.read("../data/intermediate/networkmodel_spectrum2.csv", DataFrame);
+ns1 = DataFrame(load("../data/intermediate/networkmodel_spectrum1.csv"))
+ns2 = DataFrame(load("../data/intermediate/networkmodel_spectrum2.csv"));
 
 scatter(ns1[:,1],ns1[:,2],xlimit=(0,20),ylimit=(0,20),markersize=1.5,markerstrokewidth=0, label="network 1")
 scatter!(ns2[:,1],ns2[:,2],xlimit=(5,20),ylimit=(5,20),markersize=1.5,markerstrokewidth=0, label="network 2")

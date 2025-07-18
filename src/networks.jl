@@ -1,4 +1,4 @@
-using CSV
+using CSVFiles
 using Graphs
 using StatsBase
 using Plots
@@ -28,9 +28,9 @@ function binet(sizes, sizes_high::AbstractVector{<:Integer}, nedges_high::Intege
         if rand()<assort && (d1[src(ep[1])]-d1[dst(ep[1])])*(d2[sd[1]]-d2[sd[2]])<0
             reverse!(sd)
         end
-        
+
         sd .= (sizes[1].+ ((sd.-1).÷hsizeratio.+1)) # divide by hsizeratio to collapse female vertices
-        add_edge!(binet, src(ep[1]),sd[1]) 
+        add_edge!(binet, src(ep[1]),sd[1])
         add_edge!(binet, dst(ep[1]),sd[2])
     end
     binet
@@ -51,7 +51,7 @@ function binet2(sizes, sizes_high::AbstractVector{<:Integer}, nedges_high::Integ
         if rand()<assort && (d1[src(ep[1])]-d1[dst(ep[1])])*(d2[sd[1]-sizes[1]]-d2[sd[2]-sizes[1]])<0
             reverse!(sd)
         end
-        add_edge!(binet, src(ep[1]),sd[1]) 
+        add_edge!(binet, src(ep[1]),sd[1])
         add_edge!(binet, dst(ep[1]),sd[2])
     end
     binet

@@ -7,7 +7,7 @@
 #       extension: .jl
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.16.4
+#       jupytext_version: 1.17.2
 #   kernelspec:
 #     display_name: Julia 1.9.3
 #     language: julia
@@ -21,19 +21,19 @@ using Pkg
 # %%
 # Set the plotting backend and styles
 using Plots
-gr(fontfamily="Helvetica", foreground_color_legend=nothing, background_color_legend=nothing, 
-   titlefontsize=11, tickfontsize=10, legendfontsize=8, labelfontsize=10, 
+gr(fontfamily="Helvetica", foreground_color_legend=nothing, background_color_legend=nothing,
+   titlefontsize=11, tickfontsize=10, legendfontsize=8, labelfontsize=10,
    grid=true, tick_direction=:out, size=(400, 300))
 
 
 # %%
 # Load the data
-using CSV, DataFrames
-merged_data = CSV.read("../data/intermediate/merged_data.csv", DataFrame) #|> first
+using CSVFiles, DataFrames
+merged_data = DataFrame(load("../data/intermediate/merged_data.csv")) #|> first
 
 # %%
 colourmap = cgrad(:inferno)
-# margin 
+# margin
 left_margin = 10 * Plots.PlotMeasures.mm
 right_margin = 10 * Plots.PlotMeasures.mm
 top_margin = 10 * Plots.PlotMeasures.mm
@@ -51,8 +51,8 @@ plot_data1 = DataFrame(
 plot_data1 = filter(row -> row.R0clade2 <= 3, plot_data1)
 
 # Plot (cladeII R0-criticalR0 cladeI)
-plot_1 = plot(plot_data1.R0clade2, plot_data1.cR0, linecolor = colourmap[1], linewidth = 1.5, alpha = 0.8, 
-    xlabel = "clade II R₀ in the previous epidemic", ylabel = "clade I R₀ for epidemic takeoff", 
+plot_1 = plot(plot_data1.R0clade2, plot_data1.cR0, linecolor = colourmap[1], linewidth = 1.5, alpha = 0.8,
+    xlabel = "clade II R₀ in the previous epidemic", ylabel = "clade I R₀ for epidemic takeoff",
     legend = (0.75,0.5), label = "0%", legendtitle = "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0vaccine uptake", legendtitlefonthalign=:right, legendtitlefontsize=8,
     left_margin = left_margin, right_margin = right_margin, top_margin = top_margin, bottom_margin = bottom_margin, xlim = (1,3),
     yticks = ([0, 1, 2, 4, 6, 8], string.([0, 1, 2, 4, 6, 8])), ylim = (0, maximum(plot_data1.cR0))
@@ -78,7 +78,7 @@ plot_data2 = DataFrame(
 plot_data2 = filter(row -> row.R0clade2 <= 3, plot_data2)
 
 # Plot (cladeIIR0-effective susceptible prop)
-plot_2 = plot(plot_data2.R0clade2, plot_data2.effectiveS .* 100, linecolor = colourmap[1], linewidth = 1.5, alpha = 0.8, 
+plot_2 = plot(plot_data2.R0clade2, plot_data2.effectiveS .* 100, linecolor = colourmap[1], linewidth = 1.5, alpha = 0.8,
     xlabel = "clade II R₀ in the previous epidemic", ylabel = "effective susceptible proportion %", legend = (0.75,0.9),label = "0%", legendtitle = "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0vaccine uptake", legendtitlefonthalign=:right,legendtitlefontsize=8,
     left_margin=left_margin, right_margin=right_margin, top_margin=top_margin, bottom_margin=bottom_margin, xlim=(1, 3),
      yticks=0:20:100, ylim=(0, 100)
@@ -89,6 +89,6 @@ plot!(plot_data2.R0clade2, plot_data2.effectiveS_50 .* 100, linecolor = colourma
 plot!(plot_data2.R0clade2, plot_data2.effectiveS_70 .* 100, linecolor = colourmap[200], linewidth = 1.5, alpha = 0.8, label = "70%")
 
 # %%
-# Combine the two plots 
+# Combine the two plots
 combined_plot = plot(plot_2, plot_1, layout = (1, 2), size = (800, 300)) |> display
 #savefig(combined_plot, "fig_s7.svg")
