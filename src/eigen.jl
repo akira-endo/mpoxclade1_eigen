@@ -431,7 +431,6 @@ function waic(cm::ContactMatrix, opt=cm.misc[:opt])
     cm.misc[:opt]=opt0 # restore opt
     (waic, se_waic)
 end
-include("../src/UniformSphere.jl")
 function propagateISR(cm::ContactMatrix, nsamples = 10000, opt=cm.misc[:opt])
     nll = opt.nll
     len = opt.chain|>length
