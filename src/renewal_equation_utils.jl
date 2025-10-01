@@ -1,5 +1,4 @@
-using Accessors
-using CSV
+using CSVFiles
 using Dates
 using DataFrames
 using DataFramesMeta
@@ -8,6 +7,8 @@ using MCMCChains
 using Pipe
 using Plots
 using ProgressMeter
+using Random
+using StatsBase
 using StatsPlots
 using Turing
 
@@ -37,7 +38,7 @@ function end_of_week_given_week(year::Int, week_number::Int)
 end
 
 function read_suspected_DRC_SK()
-	df = CSV.read(PATH_SUSPECTED, DataFrame)
+	df = DataFrame(load(PATH_SUSPECTED))
 	df.date = end_of_week_given_week.(df.year, df.week)
 	df.date = @. ifelse(df.year == 2024, df.date - Dates.Day(7), df.date)
 	df.xvalue .= 1:nrow(df)
@@ -49,7 +50,7 @@ function read_suspected_DRC_SK()
 end
 
 function read_WHO_confirmed()::DataFrame
-	df_all = @pipe CSV.read(PATH_WHO_CONFIRMED, DataFrame) |>
+	df_all = @pipe DataFrame(load(PATH_WHO_CONFIRMED)) |>
 				   sort(_, :week_end_date)
 	df_DRC = @pipe filter(x -> x.country == "Democratic Republic of the Congo", df_all) |>
 				   sort(_, :week_end_date)
@@ -60,17 +61,20 @@ function read_WHO_confirmed()::DataFrame
 		@orderby :week_end_date
 		@subset (:week_end_date .<= latest_date) .& (:week_end_date .>= Date("2023-01-01"))
 	end
-	# Cleaning for estimation
-	N_SPILLOVER = 3.0 # per week
 	df_conf.xvalue .= 1:nrow(df_conf)
-	Cs = df_conf.new_confirmed_cases
-	df_conf.spillover = @. ifelse(Cs - N_SPILLOVER < 0.0, Cs, N_SPILLOVER)
+
+	#N_SPILLOVER = 2.53 # per week
+	#df_conf.spillover .= N_SPILLOVER
+	N_SPILLOVER = 6 # per week
+	@transform!(df_conf,
+		:spillover = ifelse.(:new_confirmed_cases .< N_SPILLOVER,
+			:new_confirmed_cases, N_SPILLOVER))
 	return df_conf
 end
 
 abstract type UnivariateOffset end
 
-Distributions.mean(d::UnivariateOffset) = mean(d.d) - d.offset
+Distributions.mean(d::UnivariateOffset) = mean(d.d) + d.offset
 Base.length(x::UnivariateOffset) = 1
 Base.iterate(x::UnivariateOffset) = (x, nothing)
 Base.iterate(x::UnivariateOffset, nothing) = nothing
