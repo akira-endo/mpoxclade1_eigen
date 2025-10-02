@@ -1,7 +1,7 @@
 ENV["TMPDIR"] = "/tmp"
 using LinearAlgebra
 using Countries
-using CSV
+using CSVFiles
 using DataFrames
 using Distributions
 using Plots
@@ -144,9 +144,9 @@ function Base.hcat(cm1::ContactMatrix, cm2::ContactMatrix)
 end
 
 # contact matrix data
-wpp2024=CSV.read("../data/wpp2024/populationdata.csv",DataFrame)[:,[:Location,:Iso3,:AgeStart,:Time,:Value]]
+wpp2024=DataFrame(load("../data/wpp2024/populationdata.csv"))[:,[:Location,:Iso3,:AgeStart,:Time,:Value]]
 rename!(wpp2024,:Value=>:population,:AgeStart=>Symbol("lower.age.limit"))
-function popsize(ageinterval; countrycode, year,data=wpp2024) 
+function popsize(ageinterval; countrycode, year,data=wpp2024)
 fildata = filter(:Time=>==(year),filter(:Iso3=>==(countrycode),data))
 rcopy(smr.pop_age(fildata, ageinterval.|>Int)).population|>Base.Fix2(normalize,1)
 end
@@ -402,7 +402,7 @@ function MCMCiterate(f::Function, cm::ContactMatrix, chain::Chains=chainof(cm))
             cm.misc[:opt].nll(parv) # update cm with MCMC slice
             f(cm)
     end for parvec in (chain|>Array|>eachrow)]
-    
+
     if len>=10 med[1:8].=sqrt.(2med[1:8]).+1 end
     cm.misc[:opt].nll(med) # revert cm to median estimates
     out
@@ -413,12 +413,12 @@ function pwlikelihood(cm)
     ps = (Pyramid(cases,p.casecategories,p.ageinterval,p.graphlabel,p.misc) for cases in onehot_vov(p.cases))
     likelihood.(ps,Ref(cm))
 end
-    
+
 function waic(cm::ContactMatrix, opt=cm.misc[:opt])
     #replace opt
     opt0 = cm.misc[:opt]
     cm.misc[:opt]=opt
-    
+
     nll = cm.misc[:opt].nll
     casevec=vcat(nll.p.cases...)
     pwl = MCMCiterate(pwlikelihood,cm)
@@ -443,7 +443,7 @@ function propagateISR(cm::ContactMatrix, nsamples = 10000, opt=cm.misc[:opt])
     # adaptive kernel size
     β = 1 / (length(init) + 4)
     c_i = (-2β/2).*((ld.-mean(ld)) .+ log(len)) .|>exp #sqrt of optimal kernel size as a heuristic
-    
+
     function transform!(erow)
         for r in erow
             r[9:10].=[r[9]-r[10]/2,r[9]+r[10]/2]

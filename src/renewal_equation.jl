@@ -1,4 +1,5 @@
 include("../src/renewal_equation_utils.jl")
+using Logging: Logging
 
 # Variable declaration
 Valentina_gam1 = GammaOffset(3.42, 5.25, 1.0)
@@ -34,10 +35,10 @@ end
 
 """Renewal equation to calculate the reproduction number
 """
-@model function renewal_equation_Rt_piecewise(Cs::Vector, λs::Vector)
-	Rt ~ Gamma(1, 2)
-	for i in 1:length(Cs)
-		Cs[i] ~ Poisson(λs[i] * Rt)
+@model function renewal_equation_Rt_piecewise(Ct::Vector, λs::Vector, Is::Vector)
+	Rt ~ Gamma(1, 1)
+	for i in 1:length(Ct)
+		Ct[i] ~ Poisson(λs[i] * Rt)
 	end
 end
 
@@ -55,10 +56,10 @@ function fit_renewal_equation_Rt_piecewise(Cs::Vector, Is::Vector, d::Univariate
 	for t in 2:T
 		λs[t] = estimated_incidence_renewal(Cs[1:t], d_weekly_pdf)
 	end
-	Cs_local = Cs .- Is
+	Ct = Cs .- Is
 	return sample(
-		renewal_equation_Rt_piecewise(Cs_local[2:end], λs[2:end]),
-		NUTS(), 1000, progress = false; initial_params = [1.0])
+		renewal_equation_Rt_piecewise(Ct[2:end], λs[2:end], Is[2:end]),
+		NUTS(), 1000, progress = false)
 end
 
 function create_RenewalRtHolder(ds::Vector, Cs::Vector, Is::Vector, d::UnivariateAndOffset)
@@ -66,15 +67,19 @@ function create_RenewalRtHolder(ds::Vector, Cs::Vector, Is::Vector, d::Univariat
 	return RenewalRtHolder(ds, Cs, Is, chn)
 end
 
-function estimate_multiple_RenewalRt(df_conf2023Sep, df_SK)
-	RtHol_DRC2023Sep1 = @with df_conf2023Sep create_RenewalRtHolder(
-		:xvalue, :new_confirmed_cases, :spillover, Valentina_wb_ser1)
-	RtHol_DRC2023Sep1.dic |> display
+function estimate_DRC_RenewalRt(df_conf2023Aug, gens, Ispill::Float64)::DataFrame
+	Logging.disable_logging(Logging.Info)
 
-	RtHol_DRC2023Sep2 = @with df_conf2023Sep create_RenewalRtHolder(
-		:xvalue, :new_confirmed_cases, :spillover, Valentina_wb_ser2)
-	RtHol_DRC2023Sep2.dic |> display
+	stat_sum = DataFrame()
+	Random.seed!(13)
+	for g in gens
+		res = pooled_Rt_posteriors(df_conf2023Aug, g, Ispill)
+		stat_sum = vcat(res, stat_sum)
+	end
+	return stat_sum
+end
 
+function estimate_SK_RenewalRt(df_SK)::DataFrame
 	df_SK.null .= 0
 	RtHol_SK1 = @with df_SK create_RenewalRtHolder(
 		:xvalue, :new_suspect_SK, :null, Valentina_wb_ser1)
@@ -83,13 +88,25 @@ function estimate_multiple_RenewalRt(df_conf2023Sep, df_SK)
 	RtHol_SK2 = @with df_SK create_RenewalRtHolder(
 		:xvalue, :new_suspect_SK, :null, Valentina_wb_ser2)
 	RtHol_SK2.dic |> display
-	return [RtHol_DRC2023Sep1, RtHol_DRC2023Sep2, RtHol_SK1, RtHol_SK2]
+
+	res = DataFrame(
+		Rt_m = [RtHol_SK1.dic[:Rt_mlh][1], RtHol_SK2.dic[:Rt_mlh][1]],
+		Rt_l = [RtHol_SK1.dic[:Rt_mlh][2], RtHol_SK2.dic[:Rt_mlh][2]],
+		Rt_h = [RtHol_SK1.dic[:Rt_mlh][3], RtHol_SK2.dic[:Rt_mlh][3]],
+	)
+	return res
 end
 
-function merge_means_confs(RtHols::Vector{RenewalRtHolder})
-	R_means = [RtHol.dic[:Rt_mlh][1] for RtHol in RtHols]
-	R_confs = [RtHol.dic[:Rt_mlh][2:3] for RtHol in RtHols]
-	return R_means, R_confs
+function pooled_Rt_posteriors(df::DataFrame, g::UnivariateAndOffset, Ispill::Float64)::DataFrame
+	Rt_est = []
+	for _ in 1:100
+		df.spillover = truncated.(Poisson(Ispill), 0, df.new_confirmed_cases) .|> rand
+		chn = @with df fit_renewal_equation_Rt_piecewise(:new_confirmed_cases, :spillover, g)
+		Rt_est = vcat(chn[:Rt].data[:, 1], Rt_est)
+	end
+	Rt_mlh = quantile(Rt_est, [0.5, 0.025, 0.975])
+	res = DataFrame(Rt_m = Rt_mlh[1], Rt_l = Rt_mlh[2], Rt_h = Rt_mlh[3])
+	return res
 end
 
 function fetch_1st_date_of_month(df::DataFrame, xticks::Vector; col_date = :date)
@@ -107,7 +124,7 @@ function fetch_1st_date_of_month(df::DataFrame, xticks::Vector; col_date = :date
 end
 
 function plot_epicurve_SK_DRC(
-	df_DRC, df_SK, df_conf, df_conf2023, df_conf2023Sep,
+	df_DRC, df_SK, df_conf, df_conf2023, df_conf2023Aug,
 	R_means, R_confs,
 )
 	# Panel A
@@ -131,7 +148,9 @@ function plot_epicurve_SK_DRC(
 	bar!(pl2, df_conf2023.xvalue, df_conf2023.new_confirmed_cases,
 		xticks = (xticks, xticks_label),
 		label = "confirmed", color = 2, legend = (0.1, 0.95))
-	bar!(pl2, df_conf2023Sep.xvalue, df_conf2023Sep.spillover, color = 3, label = "assumed spillover")
+	bar!(pl2, df_conf2023Aug.xvalue, df_conf2023Aug.spillover, color = 3, label = "imputed spillover")
+	#bar!(pl2, df_conf2023Sep.xvalue, m_vec, yerror=s_vec, color = 3, label = "assumed spillover",
+	#	markerstrokewidth=3, linewidth=0.5, markersize=1)
 	plot!(pl2, [35.5, 54], [0, 0], fillrange = [0, 0] .+ 80,
 		label = false, color = :grey, alpha = 0.5)
 	annotate!(pl2, (-0.05, 1.15), text("(B)", :left, font(12, "Helvetica")))
@@ -160,6 +179,6 @@ function plot_epicurve_SK_DRC(
 	layout = @layout [a; b{0.02h}; c d e{0.15w}]
 	pl = plot(pl1, pl_space, pl2, pl3, pl4, layout = layout, size = (800, 500),
 		bottom_margin = 4Plots.mm, left_margin = 3Plots.mm, right_margin = 3Plots.mm,
-		dpi = 300)
+		dpi = 300, fmt = :png)
 	display(pl)
 end
